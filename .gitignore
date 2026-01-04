@@ -1,0 +1,21 @@
+
+ignore/
+stl/
+batch/
+site/
+/*.json
+
+# From https://github.com/github/gitignore/blob/main/Python.gitignore
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+._*
+
+*.png
+*.jpg
+*.gif
+
+
+.DS_Store
