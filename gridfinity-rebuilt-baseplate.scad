@@ -41,7 +41,7 @@ n_screws = 1; // [1:3]
 // minimum length of baseplate along x (leave zero to ignore, will automatically fill area if gridx is zero)
 distancex = 204 ;
 // minimum length of baseplate along y (leave zero to ignore, will automatically fill area if gridy is zero)
-distancey = 18 ;
+distancey = 58 ;
 
 // where to align extra space along x
 fitx = 0; // [-1:0.1:1]
