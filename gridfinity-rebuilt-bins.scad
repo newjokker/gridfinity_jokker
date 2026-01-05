@@ -1,7 +1,7 @@
 // ===== INFORMATION ===== //
 /*
  IMPORTANT: rendering will be better in development builds and not the official release of OpenSCAD, but it makes rendering only take a couple seconds, even for comically large bins.
- the magnet holes can have an extra cut in them to make it easier to print without supports
+             the magnet holes can have an extra cut in them to make it easier to print without supports
  tabs will automatically be disabled when gridz is less than 3, as the tabs take up too much space
  base functions can be found in "gridfinity-rebuilt-utility.scad"
  comments like ' //.5' after variables are intentional and used by the customizer
@@ -41,11 +41,11 @@ $fs = 0.25; // .01
 
 /* [General Settings] */
 // number of bases along x-axis
-gridx = 3;
+gridx = 1;
 // number of bases along y-axis
-gridy = 2;
+gridy = 1;
 // bin height. See bin height information and "gridz_define" below.
-gridz = 6; //.1
+gridz = 5; //.1
 
 // Half grid sized bins.  Implies "only corners".
 half_grid = false;
@@ -78,7 +78,7 @@ c_chamfer = 0.5; // .1
 
 /* [Compartment Features] */
 // the type of tabs
-style_tab = 1; //[0:Full,1:Auto,2:Left,3:Center,4:Right,5:None]
+style_tab = 3; //[0:Full,1:Auto,2:Left,3:Center,4:Right,5:None]
 // which divisions have tabs
 place_tab = 0; // [0:Everywhere-Normal,1:Top-Left Division]
 // scoop weight percentage. 0 disables scoop, 1 is regular scoop. Any real number will scale the scoop.
@@ -88,11 +88,11 @@ scoop = 1; //[0:0.1:1]
 // only cut magnet/screw holes at the corners of the bin to save uneccesary print time
 only_corners = false;
 //Use gridfinity refined hole style. Not compatible with magnet_holes!
-refined_holes = true;
+refined_holes = false;
 // Base will have holes for 6mm Diameter x 2mm high magnets.
-magnet_holes = false;
+magnet_holes = true;
 // Base will have holes for M3 screws.
-screw_holes = false;
+screw_holes = true;
 // Magnet holes will have crush ribs to hold the magnet.
 crush_ribs = true;
 // Magnet/Screw holes will have a chamfer to ease insertion.
@@ -143,139 +143,140 @@ bin_render(bin1) {
 }
 
 // ===== EXAMPLES ===== //
-/*
-// 1x1 bin
-bin_11 = new_bin([1, 1], fromGridfinityUnits(2));
-// 3x3 bin
-bin_33 = new_bin([3, 3], fromGridfinityUnits(6));
 
-// Centered custom sized compartment.
-translate([200, 200, 0])
-bin_render(bin_11) {
-    bin_translate(bin_11, [0.5, 0.5])
-    compartment_cutter([10, 20,cgs().z]);
-}
+// // 1x1 bin
+// bin_11 = new_bin([1, 1], fromGridfinityUnits(2));
+// // 3x3 bin
+// bin_33 = new_bin([3, 3], fromGridfinityUnits(6));
 
-//Vary radius per child
-translate([150, 200, 0])
-bin_render(bin_11) {
-    depth = bin_get_infill_size_mm(bin_11).z;
-    bin_subdivide(bin_11, [3, 1]) {
-        element = grid_element_current();
-        r = 3 + grid_element_get_sequence_number(element);
+// // Centered custom sized compartment.
+// translate([200, 200, 0])
+// bin_render(bin_11) {
+//     bin_translate(bin_11, [0.5, 0.5])
+//     compartment_cutter([10, 20, cgs().z]);
+// }
 
-        cut_chamfered_cylinder(r, depth);
-    }
-}
+// //Vary radius per child
+// translate([150, 200, 0])
+// bin_render(bin_11) {
+//     depth = bin_get_infill_size_mm(bin_11).z;
+//     bin_subdivide(bin_11, [3, 1]) {
+//         element = grid_element_current();
+//         r = 3 + grid_element_get_sequence_number(element);
 
-// One child per subdivision.
-translate([150, 150, 0])
-bin_render(bin_11) {
-    depth = bin_get_infill_size_mm(bin_11).z;
-    bin_subdivide(bin_11, [3, 1]) {
-        translate([0, 0, -depth])
-        child_per_element() {
-            cylinder(r=3, h=depth);
+//         cut_chamfered_cylinder(r, depth);
+//     }
+// }
 
-            linear_extrude(depth)
-            square(4, center=true);
+// // One child per subdivision.
+// translate([150, 150, 0])
+// bin_render(bin_11) {
+//     depth = bin_get_infill_size_mm(bin_11).z;
+//     bin_subdivide(bin_11, [3, 1]) {
+//         translate([0, 0, -depth])
+//         child_per_element() {
+//             cylinder(r=3, h=depth);
 
-            rotate([0, 0, 90])
-            linear_extrude(depth)
-            text("text", halign="center");
-        }
-    }
-}
+//             linear_extrude(depth)
+//             square(4, center=true);
 
-// 3x3 even spaced grid
-translate([150, 0, 0])
-bin_render(bin_33) {
-    bin_subdivide(bin_33, [3, 3]) {
-        cut_compartment_auto(cgs());
-    }
-}
+//             rotate([0, 0, 90])
+//             linear_extrude(depth)
+//             text("text", halign="center");
+//         }
+//     }
+// }
+
+// // 3x3 even spaced grid
+// translate([150, 0, 0])
+// bin_render(bin_33) {
+//     bin_subdivide(bin_33, [3, 3]) {
+//         cut_compartment_auto(cgs());
+//     }
+// }
 
 // Compartments can be placed anywhere (this includes non-integer positions like 1/2 or 1/3). The grid is defined as [0, 0] being the bottom left corner of the bin, with each unit being 1 base long.
 //  Use `bin_translate` to go to the correct coordinates within the bin.
 //  Use `compartment_cutter(cgs([x, y]), center_top=false);` to cut a compartment of approximately size [x, y] bases.
 
-translate([-150, 0, 0])
-bin_render(bin_33) {
-    bin_translate(bin_33, [0, 0])
-    compartment_cutter(cgs([1.5, 0.5]), center_top=false);
-    bin_translate(bin_33, [0, 0.5])
-    compartment_cutter(cgs([1.5, 0.5]), center_top=false);
-    bin_translate(bin_33, [0, 1])
-    compartment_cutter(cgs([1.5, 0.5]), center_top=false);
+// translate([-150, 0, 0])
+// bin_render(bin_33) {
+//     bin_translate(bin_33, [0, 0])
+//     compartment_cutter(cgs([1.5, 0.5]), center_top=false);
+//     bin_translate(bin_33, [0, 0.5])
+//     compartment_cutter(cgs([1.5, 0.5]), center_top=false);
+//     bin_translate(bin_33, [0, 1])
+//     compartment_cutter(cgs([1.5, 0.5]), center_top=false);
 
-    bin_translate(bin_33, [0, 1.5])
-    compartment_cutter(cgs([0.5, 1.5]), center_top=false);
-    bin_translate(bin_33, [0.5, 1.5])
-    echo(cgs([0.5, 1.5]))
-    compartment_cutter(cgs([0.5, 1.5]), center_top=false);
-    bin_translate(bin_33, [1, 1.5])
-    compartment_cutter(cgs([0.5, 1.5]), center_top=false);
+//     bin_translate(bin_33, [0, 1.5])
+//     compartment_cutter(cgs([0.5, 1.5]), center_top=false);
+//     bin_translate(bin_33, [0.5, 1.5])
+//     echo(cgs([0.5, 1.5]))
+//     compartment_cutter(cgs([0.5, 1.5]), center_top=false);
+//     bin_translate(bin_33, [1, 1.5])
+//     compartment_cutter(cgs([0.5, 1.5]), center_top=false);
 
-    bin_translate(bin_33, [1.5, 0])
-    compartment_cutter(cgs([1.5, 5/3]), center_top=false);
-    bin_translate(bin_33, [1.5, 5/3])
-    compartment_cutter(cgs([1.5, 4/3]), center_top=false);
-}
+//     bin_translate(bin_33, [1.5, 0])
+//     compartment_cutter(cgs([1.5, 5/3]), center_top=false);
+//     bin_translate(bin_33, [1.5, 5/3])
+//     compartment_cutter(cgs([1.5, 4/3]), center_top=false);
+// }
 
-// Compartments can overlap! This allows for weirdly shaped compartments, such as this "2" bin.
-translate([0, 150, 0])
-bin_render(bin_33) {
-    bin_translate(bin_33, [0, 2])
-    compartment_cutter(cgs([2, 1]), center_top=false);
-    bin_translate(bin_33, [1, 0])
-    compartment_cutter(cgs([1, 3]), center_top=false);
-    bin_translate(bin_33, [1, 0])
-    compartment_cutter(cgs([2, 1]), center_top=false);
-    bin_translate(bin_33, [0, 0])
-    compartment_cutter(cgs([1, 2]), center_top=false);
-    bin_translate(bin_33, [2, 1])
-    compartment_cutter(cgs([1, 2]), center_top=false);
-}
+// // Compartments can overlap! This allows for weirdly shaped compartments, such as this "2" bin.
+// translate([0, 150, 0])
+// bin_render(bin_33) {
+//     bin_translate(bin_33, [0, 2])
+//     compartment_cutter(cgs([2, 1]), center_top=false);
+//     bin_translate(bin_33, [1, 0])
+//     compartment_cutter(cgs([1, 3]), center_top=false);
+//     bin_translate(bin_33, [1, 0])
+//     compartment_cutter(cgs([2, 1]), center_top=false);
+//     bin_translate(bin_33, [0, 0])
+//     compartment_cutter(cgs([1, 2]), center_top=false);
+//     bin_translate(bin_33, [2, 1])
+//     compartment_cutter(cgs([1, 2]), center_top=false);
+// }
 
-// A pattern of three cylinderical holes.
-translate([0, -150, 0])
-bin_render(bin_33) {
-    depth = bin_get_infill_size_mm(bin_33).z;
-    bin_translate(bin_33, [0, 0])
-    compartment_cutter(cgs([2, 3]), center_top=false);
-    bin_translate(bin_33, [0, 0])
-    compartment_cutter(cgs([3, 1]), center_top=false);
+// // A pattern of three cylinderical holes.
+// translate([0, -150, 0])
+// bin_render(bin_33) {
+//     depth = bin_get_infill_size_mm(bin_33).z;
+//     bin_translate(bin_33, [0, 0])
+//     compartment_cutter(cgs([2, 3]), center_top=false);
+//     bin_translate(bin_33, [0, 0])
+//     compartment_cutter(cgs([3, 1]), center_top=false);
 
-    bin_translate(bin_33, [2.5, 2])
-    pattern_grid([1, 3], [42/2, 42/2], true, true) {
-        // Cannot use `cgs` here!
-        cut_chamfered_cylinder(5, depth);
-    }
-}
+//     bin_translate(bin_33, [2.5, 2])
+//     pattern_grid([1, 3], [42/2, 42/2], true, true) {
+//         // Cannot use `cgs` here!
+//         cut_chamfered_cylinder(5, depth);
+//     }
+// }
 
-// You can use loops as well as the bin dimensions to make different parametric functions, such as this one, which divides the box into columns, with a small 1x1 top compartment and a long vertical compartment below
-translate([150, -150, 0])
-bin_render(bin_33) {
-    gx = bin_get_bases(bin_33).x;
-    for(i=[0:gx-1]) {
-        bin_translate(bin_33, [i, 0])
-        compartment_cutter(cgs([1, gx-1]), center_top=false);
-        bin_translate(bin_33, [i, gx-1])
-        compartment_cutter(cgs([1, 1]), center_top=false);
-    }
-}
+// // You can use loops as well as the bin dimensions to make different parametric functions, such as this one, which divides the box into columns, with a small 1x1 top compartment and a long vertical compartment below
+// translate([150, -150, 0])
+// bin_render(bin_33) {
+//     gx = bin_get_bases(bin_33).x;
+//     for(i=[0:gx-1]) {
+//         bin_translate(bin_33, [i, 0])
+//         compartment_cutter(cgs([1, gx-1]), center_top=false);
+//         bin_translate(bin_33, [i, gx-1])
+//         compartment_cutter(cgs([1, 1]), center_top=false);
+//     }
+// }
 
 
-*/
-// Pyramid scheme bin
-bin_44 = new_bin([4, 4], fromGridfinityUnits(6));
 
-translate([-200, -200, 0])
-bin_render(bin_44) {
-    gx = bin_get_bases(bin_44).x;
-    gy = bin_get_bases(bin_44).y;
-    for (i = [0:gx-1])
-    for (j = [0:i])
-    bin_translate(bin_44, [j*gx/(i+1), gy-i-1])
-    compartment_cutter(cgs([gx/(i+1), 1]), center_top=false);
-}
+
+// // Pyramid scheme bin
+// bin_44 = new_bin([4, 4], fromGridfinityUnits(6));
+
+// translate([-200, -200, 0])
+// bin_render(bin_44) {
+//     gx = bin_get_bases(bin_44).x;
+//     gy = bin_get_bases(bin_44).y;
+//     for (i = [0:gx-1])
+//     for (j = [0:i])
+//     bin_translate(bin_44, [j*gx/(i+1), gy-i-1])
+//     compartment_cutter(cgs([gx/(i+1), 1]), center_top=false);
+// }

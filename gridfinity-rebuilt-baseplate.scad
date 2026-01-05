@@ -21,9 +21,9 @@ $fs = 0.25;
 
 /* [General Settings] */
 // number of bases along x-axis
-gridx = 1;
+gridx = 9;
 // number of bases along y-axis
-gridy = 1;
+gridy = 9;
 
 /* [Screw Together Settings - Defaults work for M3 and 4-40] */
 // screw diameter
@@ -38,9 +38,9 @@ n_screws = 1; // [1:3]
 
 /* [Fit to Drawer] */
 // minimum length of baseplate along x (leave zero to ignore, will automatically fill area if gridx is zero)
-distancex = 0;
+distancex = 408 ;
 // minimum length of baseplate along y (leave zero to ignore, will automatically fill area if gridy is zero)
-distancey = 0;
+distancey = 413 ;
 
 // where to align extra space along x
 fitx = 0; // [-1:0.1:1]
@@ -55,7 +55,7 @@ style_plate = 3; // [0: thin, 1:weighted, 2:skeletonized, 3: screw together, 4: 
 
 
 // hole styles
-style_hole = 0; // [0:none, 1:countersink, 2:counterbore]
+style_hole = 2; // [0:none, 1:countersink, 2:counterbore]
 
 /* [Magnet Hole] */
 // Baseplate will have holes for 6mm Diameter x 2mm high magnets.
