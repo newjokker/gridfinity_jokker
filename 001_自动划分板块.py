@@ -251,9 +251,118 @@ def plot_plan(info, pieces, show_grid=True):
     plt.tight_layout()
     plt.show()
 
-# =======================
-# Demo
-# =======================
+def _q(x, nd=6):
+    """Quantize float for stable hashing/compare."""
+    return round(float(x), nd)
+
+def _key_xywh(p: Piece):
+    return (_q(p.x), _q(p.y), _q(p.w), _q(p.h), p.kind)
+
+def merge_pieces(pieces, a, b, eps=1e-9):
+    """
+    合并相邻矩形（同 kind），合并后仍满足 w<=a, h<=b。
+    先尝试横向合并，再尝试纵向合并；循环直到无法继续合并。
+    """
+    # 复制，避免改原列表
+    cur = [Piece(p.pid, p.x, p.y, p.w, p.h, p.kind) for p in pieces]
+
+    changed = True
+    while changed:
+        changed = False
+
+        # ---------- 1) 横向合并 ----------
+        # 用 map 快速找“右邻居”
+        # key: (y, h, kind, x) -> piece
+        mp = {}
+        for p in cur:
+            mp[(_q(p.y), _q(p.h), p.kind, _q(p.x))] = p
+
+        used = set()
+        new_list = []
+
+        # 按 (y,x) 稳定处理
+        for p in sorted(cur, key=lambda t: (_q(t.y), _q(t.x))):
+            if id(p) in used:
+                continue
+
+            merged = p
+            used.add(id(merged))
+
+            # 尝试一直向右吞并
+            while True:
+                right_x = merged.x + merged.w
+                neighbor = mp.get((_q(merged.y), _q(merged.h), merged.kind, _q(right_x)))
+                if neighbor is None or id(neighbor) in used:
+                    break
+
+                # 检查是否真的贴边（防浮点误差）
+                if abs((merged.x + merged.w) - neighbor.x) > 1e-6:
+                    break
+                if abs(merged.y - neighbor.y) > 1e-6 or abs(merged.h - neighbor.h) > 1e-6:
+                    break
+
+                new_w = merged.w + neighbor.w
+                if new_w > a + 1e-9:
+                    break
+
+                # 合并
+                merged = Piece(merged.pid, merged.x, merged.y, new_w, merged.h, merged.kind)
+                used.add(id(neighbor))
+                changed = True
+
+            new_list.append(merged)
+
+        cur = new_list
+
+        # ---------- 2) 纵向合并 ----------
+        mp = {}
+        for p in cur:
+            mp[(_q(p.x), _q(p.w), p.kind, _q(p.y))] = p
+
+        used = set()
+        new_list = []
+
+        for p in sorted(cur, key=lambda t: (_q(t.x), _q(t.y))):
+            if id(p) in used:
+                continue
+
+            merged = p
+            used.add(id(merged))
+
+            # 尝试一直向上吞并（y 增加方向）
+            while True:
+                top_y = merged.y + merged.h
+                neighbor = mp.get((_q(merged.x), _q(merged.w), merged.kind, _q(top_y)))
+                if neighbor is None or id(neighbor) in used:
+                    break
+
+                if abs((merged.y + merged.h) - neighbor.y) > 1e-6:
+                    break
+                if abs(merged.x - neighbor.x) > 1e-6 or abs(merged.w - neighbor.w) > 1e-6:
+                    break
+
+                new_h = merged.h + neighbor.h
+                if new_h > b + 1e-9:
+                    break
+
+                merged = Piece(merged.pid, merged.x, merged.y, merged.w, new_h, merged.kind)
+                used.add(id(neighbor))
+                changed = True
+
+            new_list.append(merged)
+
+        cur = new_list
+
+    return cur
+
+def renumber_pieces(pieces):
+    """按 (y,x,kind) 排序后重新编号 pid=1..n。"""
+    out = sorted(pieces, key=lambda p: (_q(p.y), _q(p.x), p.kind))
+    for i, p in enumerate(out, start=1):
+        p.pid = i
+    return out
+
+
 if __name__ == "__main__":
     info, pieces = generate_gridfinity_baseplate_plan(
         M=413, N=408,
@@ -261,10 +370,15 @@ if __name__ == "__main__":
         K=42, min_margin_cells=1
     )
 
-    print("margins:", info["margin_left"], info["margin_bottom"], "min_margin:", info["min_margin"])
-    print("boxes:", info["boxes"], "pieces:", len(pieces))
+    print("before merge pieces:", len(pieces))
 
-    plot_plan(info, pieces, show_grid=True)
+    # ✅ 合并 + 重新编号
+    pieces_merged = merge_pieces(pieces, a=info["a"], b=info["b"])
+    pieces_merged = renumber_pieces(pieces_merged)
 
-    for each in pieces:
+    print("after merge pieces:", len(pieces_merged))
+
+    plot_plan(info, pieces_merged, show_grid=True)
+
+    for each in pieces_merged:
         print(each)
