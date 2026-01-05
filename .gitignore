@@ -17,5 +17,6 @@ __pycache__/
 *.jpg
 *.gif
 
+*.stl
 
 .DS_Store
