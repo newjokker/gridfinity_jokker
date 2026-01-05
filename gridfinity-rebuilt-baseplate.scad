@@ -74,29 +74,42 @@ drawer_y = 413;
 middle_x = 5;
 middle_y = 5;
 length = 42;
-offset_0 = 10;
 
 // 中间部分
 distancex = length * middle_x;
 distancey = length * middle_y ;
 gridfinityBaseplate([0, 0], l_grid, [distancex, distancey], style_plate, hole_options, style_hole, [fitx, fity]);
 
-// 右上角
-distancex_1 = drawer_x/2;
-distancey_1 = (drawer_y - length * middle_y)/2;
-// translate([(length * middle_x)/2 + distancex_1/2, length * middle_y/2 + distancey_1/2, 0])
-// translate([drawer_x/2 - distancex_1/2, 0, 0])
-//     gridfinityBaseplate([0, 0], l_grid, [distancex_1, distancey_1], style_plate, hole_options, style_hole, [1, 1]);
+// 右上角 
+distancex_1 = 42 * floor(drawer_x/42/2) + (drawer_x - floor(drawer_x/42)*42)/2;
+distancey_1 = 42 * floor((floor(drawer_y/42)- 5)/2) + (drawer_y - floor(drawer_y/42)*42)/2;
+translate([distancex_1/2, length * middle_y/2 + distancey_1/2, 0])
+    gridfinityBaseplate([0, 0], l_grid, [distancex_1, distancey_1], style_plate, hole_options, style_hole, [1, 1]);
 
+// 左上角 
+distancex_2 = drawer_x - distancex_1;
+translate([- distancex_2/2, length * middle_y/2 + distancey_1/2, 0])
+    gridfinityBaseplate([0, 0], l_grid, [distancex_2, distancey_1], style_plate, hole_options, style_hole, [-1, 1]);
+
+// 右下角
+distancey_5 = drawer_y - distancey_1 - length * middle_y;
+translate([distancex_1/2, -(length * middle_y/2 + distancey_1/2), 0])
+    gridfinityBaseplate([0, 0], l_grid, [distancex_1, distancey_5], style_plate, hole_options, style_hole, [1, -1]);
+
+// 左下角
+translate([-distancex_2/2, -(length * middle_y/2 + distancey_1/2), 0])
+    gridfinityBaseplate([0, 0], l_grid, [distancex_2, distancey_5], style_plate, hole_options, style_hole, [-1, -1]);
+
+// 右边
 distancex_3 = (drawer_x - length * middle_x)/2;
 distancey_3 = length * middle_y;
-// 这边改为最小的网格的个数 
-translate([distancex/2 + 42 + offset_0, 0, 0])
+translate([distancex/2 + distancex_4 , 0, 0])
     gridfinityBaseplate([0, 0], l_grid, [distancex_3, distancey_3], style_plate, hole_options, style_hole, [1, 1]);
 
+// 左边
 distancex_4 = (drawer_x - length * middle_x)/2;
 distancey_4 = length * middle_y;
-translate([-(distancex/2 + 42) - offset_0, 0, 0])
+translate([-(distancex/2 + distancex_4), 0, 0])
     gridfinityBaseplate([0, 0], l_grid, [distancex_4, distancey_4], style_plate, hole_options, style_hole, [-1, -1]);
 
 
