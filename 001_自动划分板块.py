@@ -217,14 +217,15 @@ def plot_plan(info, pieces, show_grid=True):
     ax.set_aspect("equal")
     ax.set_xlim(0, M)
     ax.set_ylim(0, N)
-
     ax.axis("off")
 
     # drawer outline
     ax.add_patch(plt.Rectangle((0, 0), M, N, fill=False, linewidth=2))
 
     # central grid region outline
-    ax.add_patch(plt.Rectangle((mx, my), used_x, used_y, fill=False, linewidth=2, linestyle="--"))
+    ax.add_patch(
+        plt.Rectangle((mx, my), used_x, used_y, fill=False, linewidth=2, linestyle="--")
+    )
 
     # optional: grid lines
     if show_grid:
@@ -235,17 +236,42 @@ def plot_plan(info, pieces, show_grid=True):
             y = my + j * K
             ax.plot([mx, mx + used_x], [y, y], linewidth=0.6, alpha=0.6)
 
+    def linestyle_for_kind(kind: str) -> str:
+        # kind 已经是分类后的：corner_*, edge_*, center
+        if kind.startswith("corner_"):
+            return "--"   # 角落：虚线
+        if kind.startswith("edge_"):
+            return ":"    # 边缘：点线
+        return "-"        # 中间：实线
+
+    def short_kind(kind: str) -> str:
+        # 更短一点显示（可按你喜好改）
+        mapping = {
+            "corner_lt": "LT", "corner_lb": "LB", "corner_rt": "RT", "corner_rb": "RB",
+            "edge_left": "L", "edge_right": "R", "edge_top": "T", "edge_bottom": "B",
+            "center": "C"
+        }
+        return mapping.get(kind, kind)
+
     # pieces
     for p in pieces:
-        ls = "-" if p.kind == "grid" else ":"
-        ax.add_patch(plt.Rectangle((p.x, p.y), p.w, p.h, fill=False, linewidth=2, linestyle=ls))
+        ls = linestyle_for_kind(p.kind)
+
+        ax.add_patch(
+            plt.Rectangle((p.x, p.y), p.w, p.h, fill=False, linewidth=2, linestyle=ls)
+        )
 
         cx = p.x + p.w / 2
         cy = p.y + p.h / 2
+
+        # 两行文本：pid + 类型
+        label = f"{p.pid}\n{p.kind}"     # 想短一点就用 short_kind(p.kind)
+        # label = f"{p.pid}\n{short_kind(p.kind)}"
+
         ax.text(
-            cx, cy, str(p.pid),
+            cx, cy, label,
             ha="center", va="center",
-            fontsize=14, fontweight="bold", color="red"
+            fontsize=10, fontweight="bold", color="red"
         )
 
     plt.tight_layout()
@@ -362,11 +388,69 @@ def renumber_pieces(pieces):
         p.pid = i
     return out
 
+def classify_piece_region(p: Piece, M: float, N: float, eps: float = 1e-6) -> str:
+    """
+    对单个矩形 piece 分类：
+      角落 > 边缘 > 中间
+    返回值：
+      corner_lt / corner_lb / corner_rt / corner_rb
+      edge_left / edge_right / edge_top / edge_bottom
+      center
+    """
+    left   = abs(p.x - 0.0) <= eps
+    right  = abs((p.x + p.w) - M) <= eps
+    bottom = abs(p.y - 0.0) <= eps
+    top    = abs((p.y + p.h) - N) <= eps
+
+    # 1) corners (priority highest)
+    if left and top:
+        return "corner_lt"
+    if left and bottom:
+        return "corner_lb"
+    if right and top:
+        return "corner_rt"
+    if right and bottom:
+        return "corner_rb"
+
+    # 2) edges
+    if left:
+        return "edge_left"
+    if right:
+        return "edge_right"
+    if top:
+        return "edge_top"
+    if bottom:
+        return "edge_bottom"
+
+    # 3) center
+    return "center"
+
+def classify_pieces_after_merge(pieces, M: float, N: float, eps: float = 1e-6, inplace: bool = True):
+    """
+    对合并后的 pieces 批量分类。
+    - inplace=True：把分类写回 p.kind（覆盖原 kind）
+    - 返回：dict，key=类别，value=该类别的 Piece 列表
+    """
+    groups = {
+        "corner_lt": [], "corner_lb": [], "corner_rt": [], "corner_rb": [],
+        "edge_left": [], "edge_right": [], "edge_top": [], "edge_bottom": [],
+        "center": []
+    }
+
+    for p in pieces:
+        region = classify_piece_region(p, M, N, eps=eps)
+        groups[region].append(p)
+        if inplace:
+            p.kind = region
+
+    return groups
+
 
 if __name__ == "__main__":
+    
     info, pieces = generate_gridfinity_baseplate_plan(
         M=413, N=408,
-        a=42 * 5, b=42 * 5,
+        a=42 * 6, b=42 * 6,
         K=42, min_margin_cells=1
     )
 
@@ -377,6 +461,7 @@ if __name__ == "__main__":
     pieces_merged = renumber_pieces(pieces_merged)
 
     print("after merge pieces:", len(pieces_merged))
+    classify_pieces_after_merge(pieces_merged, M=info["M"], N=info["N"], inplace=True)
 
     plot_plan(info, pieces_merged, show_grid=True)
 
