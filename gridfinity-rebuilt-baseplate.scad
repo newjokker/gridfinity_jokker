@@ -71,8 +71,8 @@ hole_options = bundle_hole_options(refined_hole=false, magnet_hole=enable_magnet
 
 drawer_x = 408;
 drawer_y = 413;
-middle_x = 5;
-middle_y = 5;
+middle_x = 1;
+middle_y = 1;
 length = 42;
 
 // 中间部分
@@ -82,7 +82,7 @@ gridfinityBaseplate([0, 0], l_grid, [distancex, distancey], style_plate, hole_op
 
 // 右上角 
 distancex_1 = 42 * floor(drawer_x/42/2) + (drawer_x - floor(drawer_x/42)*42)/2;
-distancey_1 = 42 * floor((floor(drawer_y/42)- 5)/2) + (drawer_y - floor(drawer_y/42)*42)/2;
+distancey_1 = 42 * floor((floor(drawer_y/42)- middle_y)/2) + (drawer_y - floor(drawer_y/42)*42)/2;
 translate([distancex_1/2, length * middle_y/2 + distancey_1/2, 0])
     gridfinityBaseplate([0, 0], l_grid, [distancex_1, distancey_1], style_plate, hole_options, style_hole, [1, 1]);
 
@@ -101,18 +101,16 @@ translate([-distancex_2/2, -(length * middle_y/2 + distancey_1/2), 0])
     gridfinityBaseplate([0, 0], l_grid, [distancex_2, distancey_5], style_plate, hole_options, style_hole, [-1, -1]);
 
 // 右边
-distancex_3 = (drawer_x - length * middle_x)/2;
+distancex_3 = 42 * floor((floor(drawer_x/42)- middle_x)/2) + (drawer_x - floor(drawer_x/42)*42)/2;
 distancey_3 = length * middle_y;
-translate([distancex/2 + distancex_4 , 0, 0])
+translate([distancex/2 + distancex_4/2 + length , 0, 0])
     gridfinityBaseplate([0, 0], l_grid, [distancex_3, distancey_3], style_plate, hole_options, style_hole, [1, 1]);
 
 // 左边
-distancex_4 = (drawer_x - length * middle_x)/2;
+distancex_4 = drawer_x - distancex_3 - middle_x * length;
 distancey_4 = length * middle_y;
-translate([-(distancex/2 + distancex_4), 0, 0])
+translate([-(distancex/2 + distancex_4/2 + length), 0, 0])
     gridfinityBaseplate([0, 0], l_grid, [distancex_4, distancey_4], style_plate, hole_options, style_hole, [-1, -1]);
-
-
 
 
 // ===== CONSTRUCTION ===== //
