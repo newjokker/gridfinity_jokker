@@ -450,9 +450,12 @@ if __name__ == "__main__":
     
     info, pieces = generate_gridfinity_baseplate_plan(
         M=413, N=408,
-        a=42 * 6, b=42 * 6,
-        K=42, min_margin_cells=1
+        a=42 * 5, b=42 * 5,
+        K=42, 
+        min_margin_cells=2  # 边缘至少包含的格子的个数
     )
+
+    # FIXME: 怎么在每一块板子上增加上序号的信息, 防止弄错
 
     print("before merge pieces:", len(pieces))
 
