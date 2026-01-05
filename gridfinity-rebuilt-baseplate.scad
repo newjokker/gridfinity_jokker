@@ -36,11 +36,11 @@ screw_spacing = .5;
 n_screws = 1; // [1:3]
 
 
-/* [Fit to Drawer] */
-// minimum length of baseplate along x (leave zero to ignore, will automatically fill area if gridx is zero)
-distancex = 408 ;
-// minimum length of baseplate along y (leave zero to ignore, will automatically fill area if gridy is zero)
-distancey = 413 ;
+// /* [Fit to Drawer] */
+// // minimum length of baseplate along x (leave zero to ignore, will automatically fill area if gridx is zero)
+// distancex = 408 ;
+// // minimum length of baseplate along y (leave zero to ignore, will automatically fill area if gridy is zero)
+// distancey = 413 ;
 
 // where to align extra space along x
 fitx = 0; // [-1:0.1:1]
@@ -69,8 +69,38 @@ hole_options = bundle_hole_options(refined_hole=false, magnet_hole=enable_magnet
 
 // ===== IMPLEMENTATION ===== //
 
-color("tomato")
-gridfinityBaseplate([gridx, gridy], l_grid, [distancex, distancey], style_plate, hole_options, style_hole, [fitx, fity]);
+drawer_x = 408;
+drawer_y = 413;
+middle_x = 5;
+middle_y = 5;
+length = 42;
+offset_0 = 10;
+
+// 中间部分
+distancex = length * middle_x;
+distancey = length * middle_y ;
+gridfinityBaseplate([0, 0], l_grid, [distancex, distancey], style_plate, hole_options, style_hole, [fitx, fity]);
+
+// 右上角
+distancex_1 = drawer_x/2;
+distancey_1 = (drawer_y - length * middle_y)/2;
+// translate([(length * middle_x)/2 + distancex_1/2, length * middle_y/2 + distancey_1/2, 0])
+// translate([drawer_x/2 - distancex_1/2, 0, 0])
+//     gridfinityBaseplate([0, 0], l_grid, [distancex_1, distancey_1], style_plate, hole_options, style_hole, [1, 1]);
+
+distancex_3 = (drawer_x - length * middle_x)/2;
+distancey_3 = length * middle_y;
+// 这边改为最小的网格的个数 
+translate([distancex/2 + 42 + offset_0, 0, 0])
+    gridfinityBaseplate([0, 0], l_grid, [distancex_3, distancey_3], style_plate, hole_options, style_hole, [1, 1]);
+
+distancex_4 = (drawer_x - length * middle_x)/2;
+distancey_4 = length * middle_y;
+translate([-(distancex/2 + 42) - offset_0, 0, 0])
+    gridfinityBaseplate([0, 0], l_grid, [distancex_4, distancey_4], style_plate, hole_options, style_hole, [-1, -1]);
+
+
+
 
 // ===== CONSTRUCTION ===== //
 
@@ -225,6 +255,7 @@ function calculate_offset(style_plate, enable_magnet, style_hole) =
     style_plate==1 ? bp_h_bot :
     calculate_offset_skeletonized(enable_magnet, style_hole);
 
+
 function calculate_offset_skeletonized(enable_magnet, style_hole) =
     h_skel + (enable_magnet ? MAGNET_HOLE_DEPTH : 0) +
     (
@@ -247,6 +278,7 @@ module cutter_weight() {
         }
     }
 }
+
 module hole_pattern(){
     pattern_circular(4)
     translate([l_grid/2-d_hole_from_side, l_grid/2-d_hole_from_side, 0]) {
