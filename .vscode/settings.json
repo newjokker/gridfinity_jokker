@@ -18,7 +18,6 @@
     "**/ehthumbs.db": true,
     "**/Desktop.ini": true,
     "**/.directory": true,
-    "**/.vscode": true,
     "**/.history": true,
     "**/.classpath": true,
     "**/.project": true,
