@@ -247,7 +247,7 @@ scale = 5                   # 示意图缩放尺寸
 # ---------------------------------------------------------------------
 
 # 创建保存文件夹
-save_dir = f"./stls/drawer_{drawer_x}_{drawer_y}_{K}_{int(a/K)}-{int(b/K)}_{min_margin_cells}"
+save_dir = f"./stls/drawer_{drawer_x}_{drawer_y}_K{K}_{int(a/K)}-{int(b/K)}_Min{min_margin_cells}"
 os.makedirs(save_dir, exist_ok=True)
 
 pieces = split_rect(M=drawer_x, N=drawer_y, a=a, b=a, K=K, min_margin_cells=min_margin_cells, img_path=os.path.join(save_dir, "split.jpg"))
