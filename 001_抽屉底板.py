@@ -2,6 +2,7 @@
 import os
 import subprocess
 import json
+from scripts.baseplate_tools import split_rect
 
 """
 
@@ -107,6 +108,23 @@ def save_to_stl(save_path, scad_code, stl_path):
         '/Applications/OpenSCAD.app/Contents/MacOS/OpenSCAD', '-o', stl_path,
         save_path
     ])
+    
+def save_to_png(save_path, scad_code, img_path, w, h):
+    # 生成文件
+    with open(save_path, "w") as f:
+        f.write(scad_code)
+
+    # 渲染为 STL
+    subprocess.run([
+        '/Applications/OpenSCAD.app/Contents/MacOS/OpenSCAD', 
+        "--projection", "ortho",
+        "--imgsize", f"{w},{h}",
+        "--camera", "0,0,0,0,0,0,100",
+        "--autocenter",
+        "--viewall",
+        '-o', img_path,
+        save_path
+    ])
 
 # 定义参数
 my_params = {
@@ -132,20 +150,56 @@ my_params = {
 
 # --------------------------- 超参 -------------------------------------
 scad_path = "./__temp_code.scad"
-stl_path = "./stls/111.stl"
+stl_dir = "./stls"
 # ---------------------------------------------------------------------
 
 # TODO: 根据需要铺设的位置的大小，根据打印机最大能打印的面积大小，自动生成需要打印的各个板块，并进行编号，生成板块的拼装示意图
 
-my_params["distancex"] = 300    # 矩形的的宽度
-my_params["distancey"] = 100    # 矩形的高度
-my_params["fitx"] = 1           # -1 全在左边
-my_params["fity"] = 1           # -1 全在下边
+pieces = split_rect(M=413, N=408, a=42 * 3, b=42 * 3, K=42, min_margin_cells=2, img_path=os.path.join(stl_dir, "split.jpg"))
 
-scad_code = create_scad_from_template(my_params)
+for each in pieces:
+    
+    my_params["distancex"] = each.w    # 矩形的的宽度
+    my_params["distancey"] = each.h    # 矩形的高度
+    
+    if each.kind in ["corner_lt"]:
+        my_params["fitx"] = -1           # -1 全在左边
+        my_params["fity"] = 1           # -1 全在下边
+    elif each.kind in ["corner_rt"]:
+        my_params["fitx"] = 1           # -1 全在左边
+        my_params["fity"] = 1           # -1 全在下边
+    elif each.kind in ["corner_lb"]:
+        my_params["fitx"] = -1           # -1 全在左边
+        my_params["fity"] = -1           # -1 全在下边
+    elif each.kind in ["corner_rb"]:
+        my_params["fitx"] = 1           # -1 全在左边
+        my_params["fity"] = -1           # -1 全在下边
+    elif each.kind in ["edge_top"]:
+        my_params["fitx"] = 0           # -1 全在左边
+        my_params["fity"] = 1           # -1 全在下边
+    elif each.kind in ["edge_bottom"]:
+        my_params["fitx"] = 0           # -1 全在左边
+        my_params["fity"] = -1           # -1 全在下边
+    elif each.kind in ["edge_left"]:
+        my_params["fitx"] = -1           # -1 全在左边
+        my_params["fity"] = 0           # -1 全在下边
+    elif each.kind in ["edge_right"]:
+        my_params["fitx"] = 1           # -1 全在左边
+        my_params["fity"] = 0           # -1 全在下边
+    elif each.kind in ["center"]:
+        my_params["fitx"] = 0           # -1 全在左边
+        my_params["fity"] = 0           # -1 全在下边
+    else:
+        raise ValueError(f"斑块类型:{each.kind} 未定义")
+        
+    scad_code = create_scad_from_template(my_params)
 
-save_to_stl(scad_path, scad_code, stl_path)
+    each_stl_path = os.path.join(stl_dir, f"{each.pid}.stl")
+    save_to_stl(scad_path, scad_code, each_stl_path)
+    
+    each_png_path = os.path.join(stl_dir, f"{each.pid}.png")
+    save_to_png(scad_path, scad_code, each_png_path, w=int(each.w) * 5, h=int(each.h) * 5)
 
-os.remove(scad_path)
+    os.remove(scad_path)
 
 

@@ -208,7 +208,7 @@ def generate_gridfinity_baseplate_plan(M, N, a, b, K=42, min_margin_cells=1):
     )
     return info, pieces
 
-def plot_plan(info, pieces, show_grid=True):
+def plot_plan(info, pieces, show_grid=True, save_path=None):
     M, N, K = info["M"], info["N"], info["K"]
     mx, my = info["margin_left"], info["margin_bottom"]
     used_x, used_y = info["used_x"], info["used_y"]
@@ -275,7 +275,10 @@ def plot_plan(info, pieces, show_grid=True):
         )
 
     plt.tight_layout()
-    plt.show()
+    if save_path is None:
+        plt.show()
+    else:
+        plt.savefig(save_path)
 
 def _q(x, nd=6):
     """Quantize float for stable hashing/compare."""
@@ -445,12 +448,34 @@ def classify_pieces_after_merge(pieces, M: float, N: float, eps: float = 1e-6, i
 
     return groups
 
+def split_rect(M, N, a, b, K=42, min_margin_cells=1, img_path=None):
+    
+    info, pieces = generate_gridfinity_baseplate_plan(
+        M=413, N=408,
+        a=42 * 6, b=42 * 6,
+        K=42, 
+        min_margin_cells=2  # 边缘至少包含的格子的个数
+    )
+    
+    info, pieces = generate_gridfinity_baseplate_plan(M=M, N=N, a=a, b=b, K=K, min_margin_cells=min_margin_cells)
+    
+    # 合并 + 重新编号
+    pieces_merged = merge_pieces(pieces, a=info["a"], b=info["b"])
+    pieces_merged = renumber_pieces(pieces_merged)
+    
+    classify_pieces_after_merge(pieces_merged, M=info["M"], N=info["N"], inplace=True)
+
+    # 出图
+    plot_plan(info, pieces_merged, show_grid=True, save_path=img_path)
+
+    return pieces_merged
+
 
 if __name__ == "__main__":
     
     info, pieces = generate_gridfinity_baseplate_plan(
         M=413, N=408,
-        a=42 * 5, b=42 * 5,
+        a=42 * 6, b=42 * 6,
         K=42, 
         min_margin_cells=2  # 边缘至少包含的格子的个数
     )
