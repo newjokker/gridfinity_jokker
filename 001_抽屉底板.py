@@ -3,6 +3,7 @@ import os
 import subprocess
 import json
 from scripts.baseplate_tools import split_rect
+from PIL import Image, ImageDraw, ImageFont
 
 """
 
@@ -126,6 +127,91 @@ def save_to_png(save_path, scad_code, img_path, w, h):
         save_path
     ])
 
+def stitch_pieces_png(
+    pieces,
+    png_dir,
+    out_path,
+    canvas_W, canvas_H,
+    scale=5,
+    draw_border=True,
+    draw_id=True,
+    bg=(255, 255, 255, 0),
+    flip_y=False,
+):
+    """
+    把每个 pid.png 按 pieces 的 (x,y,w,h) 拼回一张大图。
+
+    参数:
+      - pieces: 你 split_rect 返回的列表，元素有 pid,x,y,w,h
+      - png_dir: 保存 pid.png 的目录
+      - out_path: 输出大图路径（.png）
+      - canvas_W, canvas_H: 大图对应的尺寸（跟 split.jpg 的坐标系一致），单位=mm 或者你 split 用的单位
+      - scale: 1 个单位对应多少像素（你现在每块用 w*5,h*5，所以默认 5）
+      - flip_y: 如果你发现 y 方向上下颠倒，就设为 True
+
+    约定:
+      - 坐标原点默认认为在左下（很多几何/建模习惯这样）
+      - PIL 贴图原点在左上，所以需要换算 y
+    """
+    # 1) 建画布
+    canvas_px = (int(round(canvas_W * scale)), int(round(canvas_H * scale)))
+    big = Image.new("RGBA", canvas_px, bg)
+    draw = ImageDraw.Draw(big)
+
+    # 字体（可选）
+    font = None
+    if draw_id:
+        try:
+            font = ImageFont.truetype("Arial.ttf", size=max(55, int(10 * scale / 5)))
+        except Exception:
+            print("使用默认字体")
+            font = ImageFont.load_default()
+
+    # 2) 逐块贴回去
+    for p in pieces:
+        pid = p.pid
+        x, y, w, h = float(p.x), float(p.y), float(p.w), float(p.h)
+
+        png_path = os.path.join(png_dir, f"{pid}.png")
+        if not os.path.exists(png_path):
+            raise FileNotFoundError(f"找不到 {png_path}")
+
+        tile = Image.open(png_path).convert("RGBA")
+
+        # 目标尺寸（像素）
+        tw = max(1, int(round(w * scale)))
+        th = max(1, int(round(h * scale)))
+
+        # 如果每块 png 尺寸不是恰好 w*scale/h*scale，就强制 resize（更鲁棒）
+        if tile.size != (tw, th):
+            tile = tile.resize((tw, th), Image.Resampling.LANCZOS)
+
+        # 坐标换算：几何坐标(左下) -> 图像坐标(左上)
+        px = int(round(x * scale))
+        if flip_y:
+            # 如果 pieces.y 本身就是“从上往下”的坐标，就用这个
+            py = int(round(y * scale))
+        else:
+            # 默认 y 是从下往上：贴图需要用 (H - (y+h))
+            py = int(round((canvas_H - (y + h)) * scale))
+
+        big.alpha_composite(tile, (px, py))
+
+        # 3) 画边框 / 编号（可选）
+        if draw_border:
+            draw.rectangle([px, py, px + tw, py + th], outline=(0, 0, 0, 255), width=max(1, scale // 5))
+
+        if draw_id:
+            text = str(pid)
+            # 放左上角一点 padding
+            draw.text((px + 3, py + 3), text, fill=(255, 0, 0, 255), font=font)
+
+    # 4) 保存
+    os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
+    big.save(out_path)
+    return out_path
+
+
 # 定义参数
 my_params = {
     'fa': 8,
@@ -147,15 +233,24 @@ my_params = {
     'chamfer_holes': True
 }
 
+# FIXME: 现在的合并方案是有问题的，可能会出现很多个只包含一个格子的斑块，但是旁白就是包含五六个格子的斑块，这很显然是不合理的，所以需要重新优化合并的逻辑
 
 # --------------------------- 超参 -------------------------------------
 scad_path = "./__temp_code.scad"
-stl_dir = "./stls"
+drawer_x = 408              # 抽屉的宽
+drawer_y = 413              # 抽屉的高
+K = 42                      # 每一个小方块的边长
+a = K * 5                   # 打印机可以打印的最大长度
+b = K * 5                   # 打印机可以打印的最大宽度
+min_margin_cells = 2        # 边缘宽度至少包含多少个小正方形的边长
+scale = 5                   # 示意图缩放尺寸
 # ---------------------------------------------------------------------
 
-# TODO: 根据需要铺设的位置的大小，根据打印机最大能打印的面积大小，自动生成需要打印的各个板块，并进行编号，生成板块的拼装示意图
+# 创建保存文件夹
+save_dir = f"./stls/drawer_{drawer_x}_{drawer_y}_{K}_{int(a/K)}-{int(b/K)}_{min_margin_cells}"
+os.makedirs(save_dir, exist_ok=True)
 
-pieces = split_rect(M=413, N=408, a=42 * 3, b=42 * 3, K=42, min_margin_cells=2, img_path=os.path.join(stl_dir, "split.jpg"))
+pieces = split_rect(M=drawer_x, N=drawer_y, a=a, b=a, K=K, min_margin_cells=min_margin_cells, img_path=os.path.join(save_dir, "split.jpg"))
 
 for each in pieces:
     
@@ -194,12 +289,23 @@ for each in pieces:
         
     scad_code = create_scad_from_template(my_params)
 
-    each_stl_path = os.path.join(stl_dir, f"{each.pid}.stl")
+    each_stl_path = os.path.join(save_dir, f"{each.pid}.stl")
     save_to_stl(scad_path, scad_code, each_stl_path)
     
-    each_png_path = os.path.join(stl_dir, f"{each.pid}.png")
+    each_png_path = os.path.join(save_dir, f"{each.pid}.png")
     save_to_png(scad_path, scad_code, each_png_path, w=int(each.w) * 5, h=int(each.h) * 5)
 
     os.remove(scad_path)
 
-
+# 生成打印核对图像
+out = stitch_pieces_png(
+    pieces=pieces,
+    png_dir=save_dir,
+    out_path=os.path.join(save_dir, "stitched.png"),
+    canvas_W=drawer_x,
+    canvas_H=drawer_y,
+    scale=5,
+    draw_border=True,
+    draw_id=True,
+    flip_y=False,  
+)
