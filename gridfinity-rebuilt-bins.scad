@@ -145,7 +145,7 @@ bin_render(bin1) {
 // ===== EXAMPLES ===== //
 
 // // 1x1 bin
-// bin_11 = new_bin([1, 1], fromGridfinityUnits(2));
+// bin_11 = new_bin([1, 2], fromGridfinityUnits(3));
 // // 3x3 bin
 // bin_33 = new_bin([3, 3], fromGridfinityUnits(6));
 
@@ -160,29 +160,99 @@ bin_render(bin1) {
 // translate([150, 200, 0])
 // bin_render(bin_11) {
 //     depth = bin_get_infill_size_mm(bin_11).z;
-//     bin_subdivide(bin_11, [3, 1]) {
-//         element = grid_element_current();
-//         r = 3 + grid_element_get_sequence_number(element);
-
+//     bin_subdivide(bin_11, [4, 4]) 
+//     {
+//         r = 2 ;
 //         cut_chamfered_cylinder(r, depth);
 //     }
+// }
+
+// module regular_hexagon(side=2.5) {
+//     polygon(points = [
+//         for (i=[0:5]) [ side*cos(60*i), side*sin(60*i) ]
+//     ]);
 // }
 
 // // One child per subdivision.
 // translate([150, 150, 0])
 // bin_render(bin_11) {
 //     depth = bin_get_infill_size_mm(bin_11).z;
-//     bin_subdivide(bin_11, [3, 1]) {
+//     bin_subdivide(bin_11, [3, 6]) {
 //         translate([0, 0, -depth])
 //         child_per_element() {
-//             cylinder(r=3, h=depth);
-
+            
 //             linear_extrude(depth)
-//             square(4, center=true);
-
-//             rotate([0, 0, 90])
+//             regular_hexagon(side=4.3);
 //             linear_extrude(depth)
-//             text("text", halign="center");
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+//             linear_extrude(depth)
+//             regular_hexagon(side=4.3);
+
+//             // rotate([0, 0, 90])
+//             // linear_extrude(depth)
+//             // text("text", halign="center");
 //         }
 //     }
 // }
