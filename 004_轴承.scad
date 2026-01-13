@@ -43,9 +43,9 @@ $fs = 0.25; // .01
 // number of bases along x-axis
 gridx = 1;
 // number of bases along y-axis
-gridy = 1;
+gridy = 2;
 // bin height. See bin height information and "gridz_define" below.
-gridz = 3; //.1
+gridz = 8; //.1
 
 // Half grid sized bins.  Implies "only corners".
 half_grid = false;
@@ -124,31 +124,51 @@ module regular_hexagon(side=2.5) {
     ]);
 }
 
+module circle_polygon(radius=2.5, $fn=0) {
+    // 使用OpenSCAD内置的circle函数
+    // $fn参数控制边数，默认0为自动，设为6可得到六边形
+    circle(r=radius, $fn=$fn);
+}
+
+
 // One child per subdivision.
+radius = 26/2;
+
 bin_render(bin_11) {
     depth = bin_get_infill_size_mm(bin_11).z;
-    bin_subdivide(bin_11, [3, 3]) {
+    bin_subdivide(bin_11, [1, 3]) {
         translate([0, 0, -depth])
+        
+        
         child_per_element() {
             
+            
+
             linear_extrude(depth)
-            regular_hexagon(side=4.3);
+            circle_polygon(radius=radius, $fn=100);
             linear_extrude(depth)
-            regular_hexagon(side=4.3);
+            circle_polygon(radius=radius, $fn=100);
             linear_extrude(depth)
-            regular_hexagon(side=4.3);
+            circle_polygon(radius=radius, $fn=100);
             linear_extrude(depth)
-            regular_hexagon(side=4.3);
-            linear_extrude(depth)
-            regular_hexagon(side=4.3);
-            linear_extrude(depth)
-            regular_hexagon(side=4.3);
-            linear_extrude(depth)
-            regular_hexagon(side=4.3);
-            linear_extrude(depth)
-            regular_hexagon(side=4.3);
-            linear_extrude(depth)
-            regular_hexagon(side=4.3);
+            circle_polygon(radius=radius, $fn=100);
+
+
+
+            // linear_extrude(depth)
+            // regular_hexagon(side=4.3);
+            // linear_extrude(depth)
+            // regular_hexagon(side=4.3);
+            // linear_extrude(depth)
+            // regular_hexagon(side=4.3);
+            // linear_extrude(depth)
+            // regular_hexagon(side=4.3);
+            // linear_extrude(depth)
+            // regular_hexagon(side=4.3);
+            // linear_extrude(depth)
+            // regular_hexagon(side=4.3);
+            // linear_extrude(depth)
+            // regular_hexagon(side=4.3);
             
         }
     }
