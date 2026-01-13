@@ -41,9 +41,9 @@ $fs = 0.25; // .01
 
 /* [General Settings] */
 // number of bases along x-axis
-gridx = 1;
+gridx = 3;
 // number of bases along y-axis
-gridy = 1;
+gridy = 2;
 // bin height. See bin height information and "gridz_define" below.
 gridz = 5; //.1
 
