@@ -22,9 +22,9 @@ $fs = 0.25;
 
 /* [General Settings] */
 // number of bases along x-axis
-gridx = 9;
+gridx = 3;
 // number of bases along y-axis
-gridy = 9;
+gridy = 3;
 
 /* [Screw Together Settings - Defaults work for M3 and 4-40] */
 // screw diameter
@@ -39,9 +39,9 @@ n_screws = 1; // [1:3]
 
 // /* [Fit to Drawer] */
 // minimum length of baseplate along x (leave zero to ignore, will automatically fill area if gridx is zero)
-distancex = 204 ;
+distancex = 0 ;
 // minimum length of baseplate along y (leave zero to ignore, will automatically fill area if gridy is zero)
-distancey = 58 ;
+distancey = 0 ;
 
 // where to align extra space along x
 fitx = 0; // [-1:0.1:1]
@@ -69,7 +69,7 @@ chamfer_holes = true;
 hole_options = bundle_hole_options(refined_hole=false, magnet_hole=enable_magnet, screw_hole=false, crush_ribs=crush_ribs, chamfer=chamfer_holes, supportless=false);
 
 
-gridfinityBaseplate([0, 0], l_grid, [distancex, distancey], style_plate, hole_options, style_hole, [fitx, fity]);
+gridfinityBaseplate([gridx, gridy], l_grid, [distancex, distancey], style_plate, hole_options, style_hole, [fitx, fity]);
 
 
 // ===== CONSTRUCTION ===== //
