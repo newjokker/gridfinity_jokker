@@ -62,8 +62,8 @@ style_hole = 0; // [0:none, 1:countersink, 2:counterbore]
 // Baseplate will have holes for 6mm Diameter x 2mm high magnets.
 enable_magnet = true;
 // Magnet holes will have crush ribs to hold the magnet.
-crush_ribs = false;
-// Magnet holes will have a chamfer to ease insertion.
+crush_ribs = true;
+// Magnet holes will have a chamfer to ease in sertion.
 chamfer_holes = true;
 
 hole_options = bundle_hole_options(refined_hole=false, magnet_hole=enable_magnet, screw_hole=false, crush_ribs=crush_ribs, chamfer=chamfer_holes, supportless=false);
