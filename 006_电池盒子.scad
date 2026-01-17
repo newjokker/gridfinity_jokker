@@ -58,7 +58,7 @@ height_internal = 0;
 // snap gridz height to nearest 7mm increment
 enable_zsnap = false;
 // If the top lip should exist.  Not included in height calculations.
-include_lip = true;
+include_lip = false;
 
 /* [Compartments] */
 // number of X Divisions (set to zero to have solid bin)
@@ -132,12 +132,13 @@ module circle_polygon(radius=2.5, $fn=0) {
 
 
 // One child per subdivision.
-radius = 10.8/2;    // 7 号电池 
-radius = 14.5/2;    // 5 号电池
+// radius = 10.8/2;    // 7 号电池 
+// radius = 14.5/2;    // 5 号电池
+radius = (18.25 + 0.5)/2;    // 18650 号电池
 
 bin_render(bin_11) {
     depth = bin_get_infill_size_mm(bin_11).z;
-    bin_subdivide(bin_11, [2, 5]) {
+    bin_subdivide(bin_11, [2, 4]) {
         translate([0, 0, -depth])
         
         
