@@ -23,7 +23,7 @@ $fs = 0.25; // .01
 // number of bases along x-axis
 gridx = 1;
 // number of bases along y-axis
-gridy = 2;
+gridy = 1;
 // bin height. See bin height information and "gridz_define" below.
 gridz = 3; //.1
 
@@ -149,7 +149,7 @@ bin_render(bin_11) {
     depth = bin_get_infill_size_mm(bin_11).z;
     actual_rect_height = (rectangle_height > 0) ? rectangle_height : depth;
     
-    bin_subdivide(bin_11, [2, 6]) {
+    bin_subdivide(bin_11, [2, 3]) {
         translate([0, 0, -actual_rect_height/2])  // 居中放置
         
         child_per_element() {
@@ -234,6 +234,120 @@ bin_render(bin_11) {
                 angle = 0
             );
             
+            // 每个子元素创建一个矩形柱
+            translate([0, 0, -30])
+            rotated_rectangular_pillar(
+                length = length,
+                width = width,
+                height = height,
+                corner_radius = corner_radius,
+                angle = 0
+            );
+            
+            // 每个子元素创建一个矩形柱
+            translate([0, 0, -30])
+            rotated_rectangular_pillar(
+                length = length,
+                width = width,
+                height = height,
+                corner_radius = corner_radius,
+                angle = 0
+            );
+            // 每个子元素创建一个矩形柱
+            translate([0, 0, -30])
+            rotated_rectangular_pillar(
+                length = length,
+                width = width,
+                height = height,
+                corner_radius = corner_radius,
+                angle = 0
+            );
+            
+            // 每个子元素创建一个矩形柱
+            translate([0, 0, -30])
+            rotated_rectangular_pillar(
+                length = length,
+                width = width,
+                height = height,
+                corner_radius = corner_radius,
+                angle = 0
+            );
+            // 每个子元素创建一个矩形柱
+            translate([0, 0, -30])
+            rotated_rectangular_pillar(
+                length = length,
+                width = width,
+                height = height,
+                corner_radius = corner_radius,
+                angle = 0
+            );
+            
+            // 每个子元素创建一个矩形柱
+            translate([0, 0, -30])
+            rotated_rectangular_pillar(
+                length = length,
+                width = width,
+                height = height,
+                corner_radius = corner_radius,
+                angle = 0
+            );
+            // 每个子元素创建一个矩形柱
+            translate([0, 0, -30])
+            rotated_rectangular_pillar(
+                length = length,
+                width = width,
+                height = height,
+                corner_radius = corner_radius,
+                angle = 0
+            );
+            
+            // 每个子元素创建一个矩形柱
+            translate([0, 0, -30])
+            rotated_rectangular_pillar(
+                length = length,
+                width = width,
+                height = height,
+                corner_radius = corner_radius,
+                angle = 0
+            );
+            // 每个子元素创建一个矩形柱
+            translate([0, 0, -30])
+            rotated_rectangular_pillar(
+                length = length,
+                width = width,
+                height = height,
+                corner_radius = corner_radius,
+                angle = 0
+            );
+            
+            // 每个子元素创建一个矩形柱
+            translate([0, 0, -30])
+            rotated_rectangular_pillar(
+                length = length,
+                width = width,
+                height = height,
+                corner_radius = corner_radius,
+                angle = 0
+            );
+            // 每个子元素创建一个矩形柱
+            translate([0, 0, -30])
+            rotated_rectangular_pillar(
+                length = length,
+                width = width,
+                height = height,
+                corner_radius = corner_radius,
+                angle = 0
+            );
+            
+            // 每个子元素创建一个矩形柱
+            translate([0, 0, -30])
+            rotated_rectangular_pillar(
+                length = length,
+                width = width,
+                height = height,
+                corner_radius = corner_radius,
+                angle = 0
+            );
             // 每个子元素创建一个矩形柱
             translate([0, 0, -30])
             rotated_rectangular_pillar(

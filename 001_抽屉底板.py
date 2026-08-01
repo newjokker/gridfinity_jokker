@@ -70,7 +70,7 @@ fity = {fity}; // [-1:0.1:1]
 /* [Styles] */
 
 // baseplate styles
-style_plate = 3; // [0: thin, 1:weighted, 2:skeletonized, 3: screw together, 4: screw together minimal]
+style_plate = {style_plate}; // [0: thin, 1:weighted, 2:skeletonized, 3: screw together, 4: screw together minimal]
 
 
 // hole styles
@@ -226,7 +226,7 @@ my_params = {
     'distancey': 100,
     'fitx': 0,
     'fity': 0,
-    'style_plate': 3,
+    'style_plate': 4,
     'style_hole': 0,
     'enable_magnet': True,
     'crush_ribs': False,
@@ -237,12 +237,13 @@ my_params = {
 
 # --------------------------- 超参 -------------------------------------
 scad_path = "./__temp_code.scad"
-drawer_x = 408              # 抽屉的宽
-drawer_y = 413              # 抽屉的高
+offset = 0                  # 边缘延伸的宽度
+drawer_x = 413 + offset     # 抽屉的宽
+drawer_y = 308 + offset     # 抽屉的高
 K = 42                      # 每一个小方块的边长
 a = K * 5                   # 打印机可以打印的最大长度
-b = K * 5                   # 打印机可以打印的最大宽度
-min_margin_cells = 2        # 边缘宽度至少包含多少个小正方形的边长
+b = K * 5                  # 打印机可以打印的最大宽度
+min_margin_cells = 1        # 边缘宽度至少包含多少个小正方形的边长
 scale = 5                   # 示意图缩放尺寸
 # ---------------------------------------------------------------------
 

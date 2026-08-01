@@ -1,7 +1,9 @@
 
 
 // minimum wall thickness
-d_wall = 0.95;
+d_wall = 0.95 * 3;
+// d_wall = 0.95 * 2;
+// d_wall = 0.95;
 
 // internal fillet radius
 r_f2 = 2.8;

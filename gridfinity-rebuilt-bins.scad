@@ -41,11 +41,12 @@ $fs = 0.25; // .01
 
 /* [General Settings] */
 // number of bases along x-axis
-gridx = 4;
+gridx = 2;
 // number of bases along y-axis
 gridy = 2;
 // bin height. See bin height information and "gridz_define" below.
-gridz = 5; //.1
+gridz = 8; //.1
+// gridz = 5; //.1
 
 // Half grid sized bins.  Implies "only corners".
 half_grid = false;
@@ -82,7 +83,7 @@ style_tab = 3; //[0:Full,1:Auto,2:Left,3:Center,4:Right,5:None]
 // which divisions have tabs
 place_tab = 0; // [0:Everywhere-Normal,1:Top-Left Division]
 // scoop weight percentage. 0 disables scoop, 1 is regular scoop. Any real number will scale the scoop.
-scoop = 1; //[0:0.1:1]
+scoop = 0; //[0:0.1:1]. // 挖取的效果
 
 /* [Base Hole Options] */
 // only cut magnet/screw holes at the corners of the bin to save uneccesary print time
@@ -90,9 +91,9 @@ only_corners = false;
 //Use gridfinity refined hole style. Not compatible with magnet_holes!
 refined_holes = false;
 // Base will have holes for 6mm Diameter x 2mm high magnets.
-magnet_holes = true;
+magnet_holes = false;
 // Base will have holes for M3 screws.
-screw_holes = true;
+screw_holes = false;
 // Magnet holes will have crush ribs to hold the magnet.
 crush_ribs = true;
 // Magnet/Screw holes will have a chamfer to ease insertion.

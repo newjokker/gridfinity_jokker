@@ -22,9 +22,9 @@ $fs = 0.25;
 
 /* [General Settings] */
 // number of bases along x-axis
-gridx = 3;
+gridx = 2;
 // number of bases along y-axis
-gridy = 3;
+gridy = 1;
 
 /* [Screw Together Settings - Defaults work for M3 and 4-40] */
 // screw diameter
@@ -52,11 +52,11 @@ fity = 0; // [-1:0.1:1]
 /* [Styles] */
 
 // baseplate styles
-style_plate = 3; // [0: thin, 1:weighted, 2:skeletonized, 3: screw together, 4: screw together minimal]
+style_plate = 4; // [0: thin, 1:weighted, 2:skeletonized, 3: screw together, 4: screw together minimal]
 
 
 // hole styles
-style_hole = 0; // [0:none, 1:countersink, 2:counterbore]
+style_hole = 2; // [0:none, 1:countersink, 2:counterbore]
 
 /* [Magnet Hole] */
 // Baseplate will have holes for 6mm Diameter x 2mm high magnets.
@@ -64,7 +64,7 @@ enable_magnet = true;
 // Magnet holes will have crush ribs to hold the magnet.
 crush_ribs = true;
 // Magnet holes will have a chamfer to ease in sertion.
-chamfer_holes = true;
+chamfer_holes = false;
 
 hole_options = bundle_hole_options(refined_hole=false, magnet_hole=enable_magnet, screw_hole=false, crush_ribs=crush_ribs, chamfer=chamfer_holes, supportless=false);
 
