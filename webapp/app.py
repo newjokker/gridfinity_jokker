@@ -142,6 +142,8 @@ def parse_bin_payload():
         "rectangle_length": number("rectangle_length", 20, 3, 200, "矩形长度"),
         "rectangle_width": number("rectangle_width", 15, 3, 200, "矩形宽度"),
         "rectangle_radius": number("rectangle_radius", 0.5, 0, 20, "矩形圆角半径"),
+        "wall_thickness": number("wall_thickness", 2.85, 0.8, 6, "外壁厚度"),
+        "divider_thickness": number("divider_thickness", 2.4, 0.6, 6, "分隔墙厚度"),
     }
     # Backward compatibility for links created before the shape selector existed.
     if params["cut_cylinders"]:
@@ -150,8 +152,12 @@ def parse_bin_payload():
         raise ValueError("开孔模式无效")
     if params["divx"] * params["divy"] > 64:
         raise ValueError("分仓总数不能超过 64")
-    cell_x = (params["gridx"] * 42 - 2.5) / params["divx"] - 1.2
-    cell_y = (params["gridy"] * 42 - 2.5) / params["divy"] - 1.2
+    inner_x = params["gridx"] * 42 - 0.5 - 2 * params["wall_thickness"]
+    inner_y = params["gridy"] * 42 - 0.5 - 2 * params["wall_thickness"]
+    cell_x = inner_x / params["divx"] - params["divider_thickness"] / 2
+    cell_y = inner_y / params["divy"] - params["divider_thickness"] / 2
+    if cell_x <= 0 or cell_y <= 0:
+        raise ValueError("壁厚或分隔墙厚度过大，当前盒子无法容纳这些分段")
     if params["cut_mode"] == "circles" and params["cylinder_diameter"] > min(cell_x, cell_y):
         raise ValueError(f"圆孔放不下：当前单格最多约 {min(cell_x, cell_y):.1f} mm")
     if params["cut_mode"] == "rectangles":
@@ -179,6 +185,9 @@ use <{root}/src/helpers/grid_element.scad>
 use <{root}/src/helpers/shapes.scad>
 $fa = 8;
 $fs = 0.5;
+// wall-parameter implementation v2: values are also passed with OpenSCAD -D.
+d_wall = {params['wall_thickness']:.3f};
+d_div = {params['divider_thickness']:.3f};
 gridx = {params['gridx']};
 gridy = {params['gridy']};
 gridz = {params['gridz']};
@@ -228,11 +237,15 @@ bin_render(bin1) {{
 '''
 
 
-def render_stl(scad_path: Path, stl_path: Path) -> None:
+def render_stl(scad_path: Path, stl_path: Path, defines: dict[str, float] | None = None) -> None:
     environment = os.environ.copy()
     environment.setdefault("QT_QPA_PLATFORM", "offscreen")
+    command = [OPENSCAD, "--backend=Manifold"]
+    for name, value in (defines or {}).items():
+        command.extend(["-D", f"{name}={value:.4f}"])
+    command.extend(["-o", str(stl_path), str(scad_path)])
     run = subprocess.run(
-        [OPENSCAD, "--backend=Manifold", "-o", str(stl_path), str(scad_path)],
+        command,
         cwd=ROOT, env=environment, capture_output=True, text=True, timeout=300,
     )
     if run.returncode or not stl_path.exists():
@@ -361,7 +374,10 @@ def bin_stl():
         with RENDER_LOCK:
             if not stl_path.exists():
                 scad_path.write_text(code, encoding="utf-8")
-                render_stl(scad_path, stl_path)
+                render_stl(scad_path, stl_path, {
+                    "d_wall": params["wall_thickness"],
+                    "d_div": params["divider_thickness"],
+                })
     except (RuntimeError, subprocess.TimeoutExpired) as exc:
         return jsonify({"error": str(exc)}), 500
 
