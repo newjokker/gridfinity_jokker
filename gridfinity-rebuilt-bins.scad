@@ -41,7 +41,7 @@ $fs = 0.25; // .01
 
 /* [General Settings] */
 // number of bases along x-axis
-gridx = 2;
+gridx = 3;
 // number of bases along y-axis
 gridy = 2;
 // bin height. See bin height information and "gridz_define" below.
@@ -63,7 +63,7 @@ include_lip = true;
 
 /* [Compartments] */
 // number of X Divisions (set to zero to have solid bin)
-divx = 1;
+divx = 2;
 // number of Y Divisions (set to zero to have solid bin)
 divy = 1;
 // Leave zero for default. Units: mm
@@ -79,7 +79,7 @@ c_chamfer = 0.5; // .1
 
 /* [Compartment Features] */
 // the type of tabs
-style_tab = 3; //[0:Full,1:Auto,2:Left,3:Center,4:Right,5:None]
+style_tab = 5; //[0:Full,1:Auto,2:Left,3:Center,4:Right,5:None]
 // which divisions have tabs
 place_tab = 0; // [0:Everywhere-Normal,1:Top-Left Division]
 // scoop weight percentage. 0 disables scoop, 1 is regular scoop. Any real number will scale the scoop.

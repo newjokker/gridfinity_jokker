@@ -23,9 +23,9 @@ $fs = 0.25; // .01
 // number of bases along x-axis
 gridx = 2;
 // number of bases along y-axis
-gridy = 2;
+gridy = 1;
 // bin height. See bin height information and "gridz_define" below.
-gridz = 3; //.1
+gridz = 4; //.1
 
 // Half grid sized bins.  Implies "only corners".
 half_grid = false;
@@ -74,11 +74,11 @@ only_corners = false;
 //Use gridfinity refined hole style. Not compatible with magnet_holes!
 refined_holes = false;
 // Base will have holes for 6mm Diameter x 2mm high magnets.
-magnet_holes = true;
+magnet_holes = false;
 // Base will have holes for M3 screws.
-screw_holes = true;
+screw_holes = false;
 // Magnet holes will have crush ribs to hold the magnet.
-crush_ribs = true;
+crush_ribs = false;
 // Magnet/Screw holes will have a chamfer to ease insertion.
 chamfer_holes = true;
 // Magnet/Screw holes will be printed so supports are not needed.
@@ -140,8 +140,8 @@ module rotated_rectangular_pillar(length = 20, width = 15, height = 10, corner_r
 
 // ===== 主渲染部分 ===== //
 
-length = 22.5 + 0.5;
-width = 22.5 + 0.4;
+length = 20 + 0.5;
+width = 17 + 0.4;
 height = 90;
 
 
@@ -149,7 +149,7 @@ bin_render(bin_11) {
     depth = bin_get_infill_size_mm(bin_11).z;
     actual_rect_height = (rectangle_height > 0) ? rectangle_height : depth;
     
-    bin_subdivide(bin_11, [3, 3]) {
+    bin_subdivide(bin_11, [3, 2]) {
         translate([0, 0, -actual_rect_height/2])  // 居中放置
         
         child_per_element() {

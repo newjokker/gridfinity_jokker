@@ -9,7 +9,7 @@ d_wall = 0.95 * 3;
 r_f2 = 2.8;
 
 // width of divider between compartments
-d_div = 1.2;
+d_div = 2.4;
 
 /**
  * @brief Size of a single gridfinity unit. [Length, Width] In millimeters.
