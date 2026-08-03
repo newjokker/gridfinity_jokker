@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /opt/openscad-nightly-2026.01.02-fixed/AppRun "$@"

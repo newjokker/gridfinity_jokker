@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#17221b">
+  <title>Gridfinity 抽屉底板生成器</title>
+  <style>
+    :root { --ink:#17221b; --muted:#677069; --paper:#f3f0e8; --card:#fffdf8; --line:#d9d5c9; --accent:#e66d3f; --green:#2d7552; }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--ink); background:radial-gradient(circle at 10% 0,#fff8e9 0,transparent 38%),var(--paper); font-family:Inter,"PingFang SC","Microsoft YaHei",sans-serif; }
+    .shell { max-width:1320px; margin:auto; padding:34px 28px 60px; }
+    header { display:flex; justify-content:space-between; align-items:end; gap:24px; margin-bottom:24px; }
+    .eyebrow { color:var(--green); font:700 12px/1 monospace; letter-spacing:.15em; text-transform:uppercase; }
+    h1 { margin:9px 0 8px; font-size:clamp(30px,4vw,56px); line-height:1; letter-spacing:-.045em; }
+    header p { margin:0; color:var(--muted); }
+    .status { padding:9px 13px; border:1px solid #bcd3c4; border-radius:999px; background:#edf7f0; color:var(--green); font-size:13px; white-space:nowrap; }
+    .header-actions { display:flex; align-items:center; gap:9px; }
+    .product-link { padding:9px 13px; border-radius:999px; color:white; background:var(--ink); font-size:13px; font-weight:700; text-decoration:none; white-space:nowrap; }
+    .product-link:hover { background:#2e493b; }
+    main { display:grid; grid-template-columns:350px 1fr; gap:20px; }
+    .card { background:color-mix(in srgb,var(--card) 94%,transparent); border:1px solid var(--line); border-radius:22px; box-shadow:0 18px 50px rgba(32,40,34,.07); }
+    form { padding:24px; }
+    .group-title { margin:0 0 15px; font:700 12px/1 monospace; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; }
+    .fields { display:grid; grid-template-columns:1fr 1fr; gap:13px; margin-bottom:22px; }
+    label { display:grid; gap:7px; font-size:13px; color:var(--muted); }
+    input,select { width:100%; border:1px solid var(--line); border-radius:11px; background:#fff; color:var(--ink); padding:11px 12px; font:600 15px/1 inherit; outline:none; }
+    input:focus,select:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba(45,117,82,.12); }
+    .fixed-value { min-height:43px; display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 12px; border:1px solid #bfd0c4; border-radius:11px; color:var(--green); background:#edf4ef; }
+    .fixed-value strong { color:var(--ink); font-size:15px; }
+    .fixed-value span { font-size:12px; }
+    .field-note { color:var(--green); font-size:11px; font-weight:650; }
+    .wide { grid-column:1/-1; }
+    .switch { display:flex; align-items:center; justify-content:space-between; padding:11px 0 4px; }
+    .switch input { width:42px; height:22px; accent-color:var(--green); }
+    button { width:100%; border:0; border-radius:13px; padding:14px 18px; background:var(--ink); color:white; font-weight:750; font-size:15px; cursor:pointer; transition:.18s ease; }
+    button:hover { transform:translateY(-1px); background:#26352b; }
+    button:disabled { cursor:wait; opacity:.6; transform:none; }
+    .button-row { display:grid; grid-template-columns:1fr 1.35fr; gap:10px; }
+    .preview-button { color:var(--ink); background:#e7eee9; border:1px solid #bfd0c4; }
+    .preview-button:hover { background:#dce9e0; }
+    .hint { color:var(--muted); font-size:12px; line-height:1.6; margin:12px 2px 0; }
+    .error { display:none; margin:0 0 14px; padding:10px 12px; border-radius:10px; color:#9c351f; background:#fff0eb; font-size:13px; }
+    .preview { min-width:0; overflow:hidden; }
+    .preview-head { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:20px 22px; border-bottom:1px solid var(--line); }
+    .preview-head h2 { margin:0; font-size:17px; }
+    .preview-title { display:flex; align-items:center; gap:12px; }
+    .view-switch { display:flex; gap:4px; padding:3px; background:#ebe9e1; border-radius:10px; }
+    .view-switch button { width:auto; padding:7px 10px; border-radius:8px; color:var(--muted); background:transparent; font-size:12px; }
+    .view-switch button.active { color:white; background:var(--ink); }
+    .view-switch button:disabled { cursor:not-allowed; opacity:.38; }
+    .metrics { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; }
+    .metric { padding:7px 10px; border-radius:9px; background:#efede5; font-size:12px; color:var(--muted); }
+    .metric strong { color:var(--ink); }
+    .stage { position:relative; min-height:560px; display:grid; place-items:center; padding:38px; overflow:auto; background-image:linear-gradient(rgba(23,34,27,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(23,34,27,.035) 1px,transparent 1px); background-size:22px 22px; }
+    svg { max-width:100%; max-height:570px; overflow:visible; filter:drop-shadow(0 14px 18px rgba(25,32,26,.12)); }
+    .piece { fill:#fcfaf2; stroke:#2d7552; stroke-width:1.5; vector-effect:non-scaling-stroke; transition:.15s; cursor:pointer; }
+    .piece:hover { fill:#f6d7c9; stroke:var(--accent); }
+    .grid-line { stroke:#bdc8bf; stroke-width:.65; vector-effect:non-scaling-stroke; }
+    .piece-label { fill:#17221b; font:700 12px monospace; pointer-events:none; text-anchor:middle; dominant-baseline:middle; }
+    .dimension { fill:#677069; font:500 11px sans-serif; }
+    #stlViewer { display:none; position:absolute; inset:0; overflow:hidden; background:radial-gradient(circle at 48% 34%,rgba(79,111,96,.72) 0,rgba(31,49,40,.5) 38%,transparent 68%),linear-gradient(145deg,#24382e 0,#111b16 72%,#0a110e 100%); }
+    .stage.stl-mode { padding:0; overflow:hidden; }
+    .stage.stl-mode #drawing { display:none; }
+    .stage.stl-mode #stlViewer { display:block; }
+    #stlCanvas { position:absolute; inset:0; }
+    #stlCanvas canvas { width:100%; height:100%; display:block; cursor:grab; touch-action:none; }
+    #stlCanvas canvas:active { cursor:grabbing; }
+    .viewer-bar { position:absolute; z-index:3; top:16px; left:16px; right:16px; display:flex; justify-content:space-between; align-items:flex-start; gap:12px; pointer-events:none; }
+    .viewer-info { display:flex; flex-wrap:wrap; gap:8px; }
+    .viewer-actions { display:flex; align-items:center; gap:8px; pointer-events:auto; }
+    .viewer-chip { padding:9px 12px; border:1px solid rgba(238,153,100,.38); border-radius:10px; color:#ffc49d; background:rgba(11,22,17,.82); box-shadow:0 8px 24px rgba(0,0,0,.24); backdrop-filter:blur(9px); font-size:12px; font-weight:750; }
+    .viewer-reset { pointer-events:auto; width:auto; padding:9px 12px; border:1px solid rgba(217,235,224,.28); border-radius:10px; color:#f4f7f5; background:rgba(11,22,17,.78); box-shadow:0 8px 24px rgba(0,0,0,.2); font-size:12px; }
+    .viewer-reset:hover { color:white; background:#2e493b; border-color:rgba(238,153,100,.55); }
+    .viewer-download { pointer-events:auto; width:auto; padding:9px 13px; border:1px solid rgba(255,180,130,.5); border-radius:10px; color:#1c211e; background:#f29a61; box-shadow:0 8px 24px rgba(0,0,0,.24); font-size:12px; }
+    .viewer-download:hover { color:#111713; background:#ffb17d; }
+    .viewer-loading { position:absolute; z-index:2; inset:0; display:grid; place-items:center; color:#e8f0eb; background:rgba(10,17,14,.28); text-shadow:0 1px 8px rgba(0,0,0,.5); font-size:14px; pointer-events:none; }
+    .viewer-loading[hidden] { display:none; }
+    .legend { padding:17px 22px; border-top:1px solid var(--line); color:var(--muted); font-size:12px; display:flex; justify-content:space-between; gap:12px; }
+    @media (max-width:850px) { .shell{padding:24px 16px 40px} header{align-items:start;flex-direction:column} main{grid-template-columns:1fr}.stage{min-height:440px;padding:25px}.preview-head{align-items:start;flex-direction:column}.metrics{justify-content:start} }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div><div class="eyebrow">Drawer Baseplate Studio</div><h1>把抽屉，铺得刚刚好。</h1><p>输入尺寸，自动规划对称边缘、最大化 42 mm 网格，并按打印范围拆件。</p></div>
+      <div class="header-actions"><a class="product-link" href="/">模型首页</a><a class="product-link" href="/bins">盒子生成器 →</a><div class="status">● 服务已就绪</div></div>
+    </header>
+    <main>
+      <form id="controls" class="card">
+        <div id="error" class="error"></div>
+        <p class="group-title">01 / 抽屉尺寸 · mm</p>
+        <div class="fields">
+          <label>左右宽度<input name="width" type="number" min="100" max="3000" step="0.1" value="413"></label>
+          <label>前后深度<input name="depth" type="number" min="100" max="3000" step="0.1" value="308"></label>
+        </div>
+        <p class="group-title">02 / 打印机范围 · mm</p>
+        <div class="fields">
+          <label>X 最大格数<input name="printer_x_cells" type="number" min="1" max="71" step="1" value="3"><span id="printerXmm" class="field-note">3 × 42 = 126 mm</span></label>
+          <label>Y 最大格数<input name="printer_y_cells" type="number" min="1" max="71" step="1" value="3"><span id="printerYmm" class="field-note">3 × 42 = 126 mm</span></label>
+        </div>
+        <p class="group-title">03 / 底板设置</p>
+        <div class="fields">
+          <label>标准网格<div class="fixed-value"><strong>42 mm</strong><span>固定尺寸</span></div></label>
+          <label>最小边缘格数<input name="min_margin_cells" type="number" min="0" max="10" step="1" value="1"></label>
+          <label class="wide">底板样式<select name="style"><option value="4">螺丝拼接 · 极简</option><option value="3">螺丝拼接</option><option value="0">薄底板</option><option value="1">加重底板</option><option value="2">镂空底板</option></select></label>
+          <label class="switch wide"><span>保留 6×2 mm 磁铁孔</span><input name="magnets" type="checkbox" checked></label>
+        </div>
+        <div class="button-row"><button id="previewButton" class="preview-button" type="button">更新预览</button><button id="download" type="button">生成 STL 并下载 ZIP</button></div>
+        <p class="hint">预览会随参数自动更新。下载包包含每块底板的 STL、编号及拼装数据；复杂方案生成可能需要几分钟。</p>
+      </form>
+      <section class="card preview">
+        <div class="preview-head"><div class="preview-title"><h2>底板预览</h2><div class="view-switch"><button id="flatView" class="active" type="button">拼装图</button><button id="stlView" type="button" disabled>STL 3D</button></div></div><div id="metrics" class="metrics"></div></div>
+        <div id="stage" class="stage"><svg id="drawing" role="img" aria-label="抽屉底板拼装预览"></svg><div id="stlViewer" aria-label="STL 三维预览"><div class="viewer-bar"><div class="viewer-info"><span id="pieceInfo" class="viewer-chip">请选择一块底板</span><span id="pieceDimensions" class="viewer-chip">长 — · 宽 — · 高 —</span></div><div class="viewer-actions"><button id="downloadPiece" class="viewer-download" type="button" disabled>下载本块 STL</button><button id="resetCamera" class="viewer-reset" type="button">复位视角</button></div></div><div id="stlCanvas"></div><div id="viewerLoading" class="viewer-loading">正在生成并加载 STL…</div></div></div>
+        <div class="legend"><span>点击编号预览，再点“下载本块 STL”即可单独下载</span><span>拖动旋转 · 滚轮缩放 · 右键平移</span></div>
+      </section>
+    </main>
+  </div>
+  <script src="/static/vendor/three-legacy/build/three.min.js"></script>
+  <script src="/static/vendor/three-legacy/examples/js/loaders/STLLoader.js"></script>
+  <script src="/static/vendor/three-legacy/examples/js/controls/OrbitControls.js"></script>
+  <script>
+    const STLLoader=THREE.STLLoader,OrbitControls=THREE.OrbitControls;
+
+    const form=document.querySelector('#controls'),svg=document.querySelector('#drawing'),metrics=document.querySelector('#metrics'),errorBox=document.querySelector('#error'),button=document.querySelector('#download'),previewButton=document.querySelector('#previewButton'),flatView=document.querySelector('#flatView'),stlView=document.querySelector('#stlView'),stage=document.querySelector('#stage'),viewer=document.querySelector('#stlViewer'),canvasHost=document.querySelector('#stlCanvas'),viewerLoading=document.querySelector('#viewerLoading'),pieceInfo=document.querySelector('#pieceInfo'),pieceDimensions=document.querySelector('#pieceDimensions'),downloadPiece=document.querySelector('#downloadPiece'),resetCamera=document.querySelector('#resetCamera'),printerXCells=document.querySelector('[name="printer_x_cells"]'),printerYCells=document.querySelector('[name="printer_y_cells"]'),printerXmm=document.querySelector('#printerXmm'),printerYmm=document.querySelector('#printerYmm');
+    let timer,currentPlan=null,viewMode='flat',selectedPiece=null,selectedStlBlob=null,requestController=null,renderer=null,scene=null,camera=null,controls=null,mesh=null,outline=null,defaultCamera=null;
+    const loader=new STLLoader(),ns='http://www.w3.org/2000/svg';
+    const payload=()=>Object.fromEntries([...new FormData(form).entries()].map(([k,v])=>[k,k==='magnets'?v==='on':v]));
+    function showError(message=''){errorBox.textContent=message;errorBox.style.display=message?'block':'none'}
+    function element(name,attrs={}){const node=document.createElementNS(ns,name);Object.entries(attrs).forEach(([k,v])=>node.setAttribute(k,v));return node}
+    function selectNode(node,piece){node.setAttribute('tabindex','0');node.setAttribute('role','button');node.setAttribute('aria-label',`预览 ${piece.pid} 号底板 STL`);node.dataset.pieceId=piece.pid;node.addEventListener('click',()=>loadPiece(piece));node.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();loadPiece(piece)}})}
+    function drawFlat(plan){
+      const W=plan.drawer.width,H=plan.drawer.depth,pad=30;svg.setAttribute('viewBox',`${-pad} ${-pad} ${W+pad*2} ${H+pad*2}`);svg.innerHTML='';
+      const group=element('g',{transform:`translate(0 ${H}) scale(1 -1)`});svg.append(group);
+      for(let i=0;i<=plan.grid_count.x;i++){const x=plan.margins.left+i*plan.grid;group.append(element('line',{x1:x,y1:plan.margins.bottom,x2:x,y2:H-plan.margins.top,class:'grid-line'}))}
+      for(let i=0;i<=plan.grid_count.y;i++){const y=plan.margins.bottom+i*plan.grid;group.append(element('line',{x1:plan.margins.left,y1:y,x2:W-plan.margins.right,y2:y,class:'grid-line'}))}
+      plan.pieces.forEach(p=>{const r=element('rect',{x:p.x,y:p.y,width:p.w,height:p.h,rx:2,class:'piece'});selectNode(r,p);const title=element('title');title.textContent=`点击预览 ${p.pid} 号 · ${p.w.toFixed(1)} × ${p.h.toFixed(1)} mm`;r.append(title);group.append(r);const t=element('text',{class:'piece-label',x:p.x+p.w/2,y:-(p.y+p.h/2),transform:'scale(1 -1)'});t.textContent=p.pid;group.append(t)})
+    }
+    function setView(mode){viewMode=mode;stage.classList.toggle('stl-mode',mode==='stl');[flatView,stlView].forEach(node=>node.classList.remove('active'));if(mode==='flat'){flatView.classList.add('active');if(currentPlan)drawFlat(currentPlan)}else{stlView.classList.add('active')}}
+    function draw(plan){currentPlan=plan;setView(viewMode==='stl'?'flat':viewMode);metrics.innerHTML=`<span class="metric">完整网格 <strong>${plan.grid_count.x} × ${plan.grid_count.y}</strong></span><span class="metric">可放盒位 <strong>${plan.grid_count.total}</strong></span><span class="metric">拆分 <strong>${plan.piece_count} 块</strong></span><span class="metric">对称边缘 <strong>${plan.margins.left.toFixed(1)} / ${plan.margins.top.toFixed(1)} mm</strong></span>`}
+    function initViewer(){
+      if(renderer)return;
+      renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));if('outputColorSpace' in renderer)renderer.outputColorSpace=THREE.SRGBColorSpace;else renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.82;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;canvasHost.append(renderer.domElement);
+      scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(38,1,.1,5000);camera.up.set(0,0,1);controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.07;controls.screenSpacePanning=true;
+      scene.add(new THREE.HemisphereLight(0xdcebe3,0x17221c,.68));const key=new THREE.DirectionalLight(0xffd8b8,1.18);key.position.set(160,-120,220);key.castShadow=true;key.shadow.mapSize.set(2048,2048);key.shadow.camera.left=-240;key.shadow.camera.right=240;key.shadow.camera.top=240;key.shadow.camera.bottom=-240;scene.add(key);const fill=new THREE.DirectionalLight(0x98c7d8,.42);fill.position.set(-120,120,100);scene.add(fill);
+      const ground=new THREE.Mesh(new THREE.PlaneGeometry(600,600),new THREE.MeshStandardMaterial({color:0x15231c,roughness:1,metalness:0}));ground.position.z=-.65;ground.receiveShadow=true;scene.add(ground);const grid=new THREE.GridHelper(500,25,0x7c9e8d,0x365246);grid.rotation.x=Math.PI/2;grid.position.z=-.5;grid.material.transparent=true;grid.material.opacity=.56;scene.add(grid);
+      const resize=()=>{const rect=viewer.getBoundingClientRect();if(!rect.width||!rect.height)return;renderer.setSize(rect.width,rect.height,false);camera.aspect=rect.width/rect.height;camera.updateProjectionMatrix()};new ResizeObserver(resize).observe(viewer);resize();
+      renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera)})
+    }
+    function fitCamera(geometry){geometry.computeBoundingBox();const box=geometry.boundingBox,center=new THREE.Vector3();box.getCenter(center);geometry.translate(-center.x,-center.y,-box.min.z);geometry.computeBoundingSphere();const radius=Math.max(geometry.boundingSphere.radius,20),verticalFov=THREE.MathUtils.degToRad(camera.fov),horizontalFov=2*Math.atan(Math.tan(verticalFov/2)*camera.aspect),fitFov=Math.min(verticalFov,horizontalFov),distance=radius/Math.sin(fitFov/2)*1.22,direction=new THREE.Vector3(1.25,-1.6,1.15).normalize(),target=new THREE.Vector3(0,0,Math.max(2,box.max.z-box.min.z)*.18);defaultCamera={position:direction.multiplyScalar(distance).add(target),target};camera.near=Math.max(.1,distance/150);camera.far=distance*30;camera.position.copy(defaultCamera.position);controls.target.copy(defaultCamera.target);controls.minDistance=radius*.35;controls.maxDistance=distance*4;camera.updateProjectionMatrix();controls.update()}
+    async function loadPiece(piece){
+      selectedPiece=piece;selectedStlBlob=null;downloadPiece.disabled=true;stlView.disabled=false;setView('stl');initViewer();pieceInfo.textContent=`${piece.pid} 号底板`;pieceDimensions.textContent=`长 ${piece.w.toFixed(1)} · 宽 ${piece.h.toFixed(1)} · 高 生成中…`;viewerLoading.hidden=false;viewerLoading.textContent='正在生成并加载 STL…';showError();if(requestController)requestController.abort();requestController=new AbortController();
+      try{const body={...payload(),piece_id:piece.pid},response=await fetch('/api/piece-stl',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:requestController.signal});if(!response.ok){const data=await response.json();throw new Error(data.error||'STL 预览生成失败')}const buffer=await response.arrayBuffer();selectedStlBlob=new Blob([buffer],{type:'model/stl'});const geometry=loader.parse(buffer);geometry.computeVertexNormals();geometry.computeBoundingBox();const actualSize=new THREE.Vector3();geometry.boundingBox.getSize(actualSize);pieceDimensions.textContent=`长 ${actualSize.x.toFixed(1)} · 宽 ${actualSize.y.toFixed(1)} · 高 ${actualSize.z.toFixed(1)} mm`;if(mesh){scene.remove(mesh);mesh.geometry.dispose();mesh.material.dispose()}if(outline){scene.remove(outline);outline.geometry.dispose();outline.material.dispose()}fitCamera(geometry);mesh=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({color:0xe9783f,roughness:.68,metalness:.015,side:THREE.DoubleSide}));mesh.castShadow=true;mesh.receiveShadow=true;scene.add(mesh);outline=new THREE.LineSegments(new THREE.EdgesGeometry(geometry,28),new THREE.LineBasicMaterial({color:0x532414,transparent:true,opacity:.68}));outline.position.copy(mesh.position);scene.add(outline);downloadPiece.disabled=false;viewerLoading.hidden=true}catch(error){if(error.name==='AbortError')return;viewerLoading.hidden=false;viewerLoading.textContent=error.message;showError(error.message)}
+    }
+    async function update(){try{const response=await fetch('/api/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload())}),data=await response.json();if(!response.ok)throw new Error(data.error||'预览失败');selectedPiece=null;selectedStlBlob=null;downloadPiece.disabled=true;stlView.disabled=true;showError();draw(data)}catch(error){showError(error.message)}}
+    function downloadCurrentPiece(){if(!selectedPiece)return;const values={...payload(),piece_id:selectedPiece.pid,download:1},a=document.createElement('a');a.href=`/api/piece-stl?${new URLSearchParams(values)}`;a.download=`${String(selectedPiece.pid).padStart(2,'0')}_${selectedPiece.w}x${selectedPiece.h}mm.stl`;document.body.append(a);a.click();a.remove()}
+    function updatePrinterNotes(){const x=Number(printerXCells.value),y=Number(printerYCells.value);printerXmm.textContent=Number.isInteger(x)?`${x} × 42 = ${x*42} mm`:'请输入整数';printerYmm.textContent=Number.isInteger(y)?`${y} × 42 = ${y*42} mm`:'请输入整数'}
+    form.addEventListener('input',()=>{updatePrinterNotes();clearTimeout(timer);timer=setTimeout(update,220)});previewButton.addEventListener('click',update);flatView.addEventListener('click',()=>setView('flat'));stlView.addEventListener('click',()=>{if(selectedPiece)loadPiece(selectedPiece)});downloadPiece.addEventListener('click',downloadCurrentPiece);resetCamera.addEventListener('click',()=>{if(defaultCamera){camera.position.copy(defaultCamera.position);controls.target.copy(defaultCamera.target);controls.update()}});
+    button.addEventListener('click',async()=>{button.disabled=true;button.textContent='正在生成 STL，请稍候…';showError();try{const response=await fetch('/api/download',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload())});if(!response.ok){const data=await response.json();throw new Error(data.error||'生成失败')}const blob=await response.blob(),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=(response.headers.get('content-disposition')?.match(/filename="?([^";]+)/)?.[1]||'gridfinity.zip');document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000)}catch(error){showError(error.message)}finally{button.disabled=false;button.textContent='生成 STL 并下载 ZIP'}});
+    update();
+  </script>
+</body>
+</html>
