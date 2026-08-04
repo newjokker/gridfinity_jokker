@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Gridfinity 双头插销">
+  <rect width="64" height="64" rx="14" fill="#142019"/>
+  <g fill="none" stroke="#b9d2c2" stroke-width="2" opacity=".38">
+    <rect x="8" y="8" width="14" height="14" rx="3"/>
+    <rect x="25" y="8" width="14" height="14" rx="3"/>
+    <rect x="42" y="8" width="14" height="14" rx="3"/>
+    <rect x="8" y="42" width="14" height="14" rx="3"/>
+    <rect x="25" y="42" width="14" height="14" rx="3"/>
+    <rect x="42" y="42" width="14" height="14" rx="3"/>
+  </g>
+  <path d="M6 32 14 23h8l5 5h10l5-5h8l8 9-8 9h-8l-5-5H27l-5 5h-8Z" fill="#ee8a4c"/>
+  <path d="m15 32 3-4h2l5 5h14l5-5h2l3 4-3 4h-2l-5-5H25l-5 5h-2Z" fill="#fff7e7"/>
+</svg>
