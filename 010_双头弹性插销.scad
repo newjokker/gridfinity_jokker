@@ -99,15 +99,18 @@ module slotted_pin(grip_d) {
     }
 }
 
-// 将插销水平放置，并在下方生成一条窄平面。
+// 将插销水平放置，再沿长轴翻滚 90°：
+// 弹性槽口从水平改为竖直，左右两条弹性臂都能直接落在打印平台上。
+// 最后在下方生成一条窄平面，提高首层附着。
 module printable_pin(mode = "standard") {
     grip_d = grip_diameter(mode);
     axis_height = grip_d / 2 - flat_cut;
 
     intersection() {
         translate([0, 0, axis_height])
-            rotate([0, 90, 0])
-                slotted_pin(grip_d);
+            rotate([90, 0, 0])
+                rotate([0, 90, 0])
+                    slotted_pin(grip_d);
 
         translate([-pin_length, -grip_d, 0])
             cube([2 * pin_length, 2 * grip_d, 2 * grip_d]);
