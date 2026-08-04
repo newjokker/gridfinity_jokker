@@ -262,7 +262,7 @@ def parse_pin_payload():
         "arm_thickness": number("arm_thickness", 1.0, 0.7, 1.3, "弹性臂壁厚"),
         "fit_clearance": number("fit_clearance", 0.2, 0.05, 0.35, "配合间隙"),
         "head_preload": number("head_preload", 0.16, 0.0, 0.3, "卡点预紧量"),
-        "target_center_length": number("target_center_length", 3.64, 1.5, 10.0, "中央长度"),
+        "target_center_length": number("target_center_length", 4.34, 1.5, 10.0, "中央长度"),
         "pointed_head": boolean("pointed_head", True),
     }
     radius = params["head_diameter"] / 2
