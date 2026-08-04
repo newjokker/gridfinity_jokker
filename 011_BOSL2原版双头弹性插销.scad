@@ -38,10 +38,10 @@ fit_clearance = 0.20;      // [0.05:0.05:0.35]
 // 卡点预紧量；越大卡紧力越高。
 head_preload = 0.16;       // [0.00:0.02:0.30]
 // true 为尖头，false 为圆头。
-pointed_head = true;
+pointed_head = false;
 
 /* [中央连接颈] */
-target_center_length = 3.64; // 中央卡点间距（mm）
+target_center_length = 4.34; // 中央卡点间距（mm）
 
 // 根据当前头部参数计算原始中央卡点间距。
 original_center_length = 2 * (nub_depth - head_preload); // 默认 2.08 mm
