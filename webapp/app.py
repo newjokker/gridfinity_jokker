@@ -23,6 +23,7 @@ app.config["MAX_CONTENT_LENGTH"] = 16 * 1024
 CACHE_DIR = Path("/tmp/gridfinity-stl-cache")
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 RENDER_LOCK = threading.Lock()
+PIN_SCAD_PATH = ROOT / "011_BOSL2原版双头弹性插销.scad"
 
 
 def request_values():
@@ -237,20 +238,76 @@ bin_render(bin1) {{
 '''
 
 
-def render_stl(scad_path: Path, stl_path: Path, defines: dict[str, float] | None = None) -> None:
+def parse_pin_payload():
+    body = request_values()
+
+    def number(name, default, minimum, maximum, label):
+        try:
+            value = float(body.get(name, default))
+        except (TypeError, ValueError):
+            raise ValueError(f"{label}请输入有效数字")
+        if not minimum <= value <= maximum:
+            raise ValueError(f"{label}需要在 {minimum:g} 到 {maximum:g} 之间")
+        return value
+
+    def boolean(name, default=False):
+        raw = body.get(name, default)
+        return raw if isinstance(raw, bool) else str(raw).lower() in ("1", "true", "yes", "on")
+
+    params = {
+        "head_diameter": number("head_diameter", 3.2, 2.5, 4.0, "销身直径"),
+        "head_length": number("head_length", 6.0, 4.0, 8.0, "单侧头部长度"),
+        "snap_projection": number("snap_projection", 0.5, 0.1, 0.6, "卡点凸出量"),
+        "nub_depth": number("nub_depth", 1.2, 0.8, 1.8, "卡点位置"),
+        "arm_thickness": number("arm_thickness", 1.0, 0.7, 1.3, "弹性臂壁厚"),
+        "fit_clearance": number("fit_clearance", 0.2, 0.05, 0.35, "配合间隙"),
+        "head_preload": number("head_preload", 0.16, 0.0, 0.3, "卡点预紧量"),
+        "target_center_length": number("target_center_length", 3.64, 1.5, 10.0, "中央长度"),
+        "pointed_head": boolean("pointed_head", True),
+    }
+    radius = params["head_diameter"] / 2
+    elastic_space = radius - params["fit_clearance"] - params["arm_thickness"]
+    if elastic_space <= 0.1:
+        raise ValueError("弹性臂壁厚或配合间隙过大，中间没有足够弹性空间")
+    if params["head_preload"] >= params["nub_depth"]:
+        raise ValueError("卡点预紧量必须小于卡点位置")
+    minimum_center = 2 * (params["nub_depth"] - params["head_preload"])
+    if params["target_center_length"] < minimum_center:
+        raise ValueError(f"当前头部参数下，中央长度不能小于 {minimum_center:.2f} mm")
+    if params["head_length"] <= 2 ** 0.5 * radius + params["fit_clearance"] + 0.5:
+        raise ValueError("头部长度过短，无法容纳当前直径和尖头")
+    return params
+
+
+def scad_define(value) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    return f"{float(value):.4f}"
+
+
+def render_stl(scad_path: Path, stl_path: Path, defines: dict[str, float | bool] | None = None) -> None:
     environment = os.environ.copy()
     environment.setdefault("QT_QPA_PLATFORM", "offscreen")
-    command = [OPENSCAD, "--backend=Manifold"]
+    arguments = []
     for name, value in (defines or {}).items():
-        command.extend(["-D", f"{name}={value:.4f}"])
-    command.extend(["-o", str(stl_path), str(scad_path)])
-    run = subprocess.run(
-        command,
-        cwd=ROOT, env=environment, capture_output=True, text=True, timeout=300,
-    )
-    if run.returncode or not stl_path.exists():
-        app.logger.error("OpenSCAD failed: %s", run.stderr[-2000:])
-        raise RuntimeError("STL 生成失败，请稍后重试")
+        arguments.extend(["-D", f"{name}={scad_define(value)}"])
+    arguments.extend(["-o", str(stl_path), str(scad_path)])
+
+    # Nightly uses the faster Manifold backend. OpenSCAD 2021.01 does not know
+    # this option, so retry once without it for local development compatibility.
+    attempts = ([OPENSCAD, "--backend=Manifold"], [OPENSCAD])
+    last_error = ""
+    for prefix in attempts:
+        stl_path.unlink(missing_ok=True)
+        run = subprocess.run(
+            [*prefix, *arguments],
+            cwd=ROOT, env=environment, capture_output=True, text=True, timeout=300,
+        )
+        if not run.returncode and stl_path.exists():
+            return
+        last_error = run.stderr
+    app.logger.error("OpenSCAD failed: %s", last_error[-2000:])
+    raise RuntimeError("STL 生成失败，请稍后重试")
 
 
 @app.get("/")
@@ -266,6 +323,11 @@ def baseplates():
 @app.get("/bins")
 def bins():
     return render_template("bins.html")
+
+
+@app.get("/pins")
+def pins():
+    return render_template("pins.html")
 
 
 @app.post("/api/plan")
@@ -386,6 +448,41 @@ def bin_stl():
     response = send_file(stl_path, mimetype="model/stl", as_attachment=as_download, download_name=filename)
     response.headers["Cache-Control"] = "private, max-age=3600"
     response.headers["X-Bin-Grid"] = f"{params['gridx']}x{params['gridy']}x{params['gridz']}"
+    return response
+
+
+@app.route("/api/pin-stl", methods=["GET", "POST"])
+def pin_stl():
+    try:
+        params = parse_pin_payload()
+        body = request_values()
+        as_download = str(body.get("download", "0")).lower() in ("1", "true", "yes", "on")
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    if not Path(OPENSCAD).exists():
+        return jsonify({"error": "服务器尚未安装 OpenSCAD"}), 503
+    if not PIN_SCAD_PATH.exists():
+        return jsonify({"error": "服务器缺少插销 SCAD 源文件"}), 503
+
+    source_hash = hashlib.sha256(PIN_SCAD_PATH.read_bytes()).hexdigest()
+    cache_input = json.dumps({"source": source_hash, "params": params}, sort_keys=True)
+    cache_key = hashlib.sha256(cache_input.encode("utf-8")).hexdigest()
+    stl_path = CACHE_DIR / f"pin-{cache_key}.stl"
+    try:
+        with RENDER_LOCK:
+            if not stl_path.exists():
+                render_stl(PIN_SCAD_PATH, stl_path, params)
+    except (RuntimeError, subprocess.TimeoutExpired) as exc:
+        return jsonify({"error": str(exc)}), 500
+
+    maximum_width = params["head_diameter"] + 2 * params["snap_projection"] - params["fit_clearance"]
+    filename = (
+        f"gridfinity_snap_pin_w{maximum_width:.2f}_center{params['target_center_length']:.2f}.stl"
+    )
+    response = send_file(stl_path, mimetype="model/stl", as_attachment=as_download, download_name=filename)
+    response.headers["Cache-Control"] = "private, max-age=3600"
+    response.headers["X-Pin-Max-Width"] = f"{maximum_width:.3f}"
+    response.headers["X-Pin-Center-Length"] = f"{params['target_center_length']:.3f}"
     return response
 
 
