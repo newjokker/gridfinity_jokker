@@ -142,8 +142,8 @@ def parse_bin_payload():
         "rectangle_length": number("rectangle_length", 20, 3, 200, "矩形长度"),
         "rectangle_width": number("rectangle_width", 15, 3, 200, "矩形宽度"),
         "rectangle_radius": number("rectangle_radius", 0.5, 0, 20, "矩形圆角半径"),
-        "wall_thickness": number("wall_thickness", 2.85, 0.8, 6, "外壁厚度"),
-        "divider_thickness": number("divider_thickness", 2.4, 0.6, 6, "分隔墙厚度"),
+        "wall_thickness": number("wall_thickness", 1.2, 0.8, 6, "外壁厚度"),
+        "divider_thickness": number("divider_thickness", 1, 0.6, 6, "分隔墙厚度"),
     }
     # Backward compatibility for links created before the shape selector existed.
     if params["cut_cylinders"]:
