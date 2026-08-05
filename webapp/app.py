@@ -9,7 +9,9 @@ import subprocess
 import tempfile
 import threading
 import zipfile
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from flask import Flask, jsonify, render_template, request, send_file
 
@@ -24,6 +26,61 @@ CACHE_DIR = Path("/tmp/gridfinity-stl-cache")
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 RENDER_LOCK = threading.Lock()
 PIN_SCAD_PATH = ROOT / "011_BOSL2原版双头弹性插销.scad"
+ACTION_LOG_PATH = ROOT / "log" / "action.log"
+ACTION_LOG_LOCK = threading.Lock()
+ACTION_TIMEZONE = ZoneInfo("Asia/Shanghai")
+
+
+def _log_text(value, maximum: int = 120) -> str:
+    return str(value).replace("\n", " ").replace("\r", " ").replace("|", "/")[:maximum]
+
+
+def write_action_log(action: str, details: dict | None = None, *, status: int | None = None) -> None:
+    parts = [
+        datetime.now(ACTION_TIMEZONE).strftime("%Y-%m-%d %H:%M:%S"),
+        f"IP {_log_text(request.remote_addr or 'unknown')}",
+        _log_text(action, 160),
+    ]
+    if status is not None:
+        parts.append(f"状态 {status}")
+    if details:
+        detail_text = " ".join(
+            f"{_log_text(key, 40)}={_log_text(value)}"
+            for key, value in list(details.items())[:15]
+        )
+        if detail_text:
+            parts.append(detail_text)
+    try:
+        ACTION_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with ACTION_LOG_LOCK, ACTION_LOG_PATH.open("a", encoding="utf-8") as stream:
+            stream.write(" | ".join(parts) + "\n")
+    except OSError:
+        # Logging must never make model generation unavailable.
+        app.logger.exception("Unable to write action log: %s", ACTION_LOG_PATH)
+
+
+@app.after_request
+def record_request_action(response):
+    action_names = {
+        "/": "访问模型首页",
+        "/baseplates": "访问底板生成器",
+        "/bins": "访问盒子生成器",
+        "/pins": "访问插销生成器",
+        "/api/download": "生成并下载底板 ZIP",
+        "/api/piece-stl": "生成底板 STL",
+        "/api/bin-stl": "生成盒子 STL",
+        "/api/pin-stl": "生成插销 STL",
+    }
+    action = action_names.get(request.path)
+    if action:
+        values = request_values() if request.path.startswith("/api/") else {}
+        detail_keys = (
+            "width", "depth", "printer_x_cells", "printer_y_cells", "piece_id", "download",
+            "gridx", "gridy", "gridz", "divx", "divy", "cut_mode", "target_center_length",
+        )
+        details = {key: values[key] for key in detail_keys if key in values}
+        write_action_log(action, details, status=response.status_code)
+    return response
 
 
 def request_values():
@@ -328,6 +385,16 @@ def bins():
 @app.get("/pins")
 def pins():
     return render_template("pins.html")
+
+
+@app.post("/api/action")
+def browser_action():
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict) or not str(body.get("action", "")).strip():
+        return jsonify({"error": "action is required"}), 400
+    details = body.get("details") if isinstance(body.get("details"), dict) else {}
+    write_action_log(str(body["action"]), details, status=204)
+    return ("", 204)
 
 
 @app.post("/api/plan")

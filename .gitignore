@@ -19,5 +19,7 @@ __pycache__/
 
 *.stl
 
+log/
+
 .DS_Store
 server_info.md

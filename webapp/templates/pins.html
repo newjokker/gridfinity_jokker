@@ -54,6 +54,7 @@
   <script src="/static/vendor/three-legacy/build/three.min.js"></script>
   <script src="/static/vendor/three-legacy/examples/js/loaders/STLLoader.js"></script>
   <script src="/static/vendor/three-legacy/examples/js/controls/OrbitControls.js"></script>
+  <script src="/static/action-logger.js"></script>
   <script>
     const form=document.querySelector('#pinForm'),previewButton=document.querySelector('#preview'),downloadButton=document.querySelector('#download'),errorBox=document.querySelector('#error'),metrics=document.querySelector('#metrics'),loading=document.querySelector('#loading'),viewer=document.querySelector('#viewer'),canvasHost=document.querySelector('#canvasHost'),modelInfo=document.querySelector('#modelInfo'),modelDimensions=document.querySelector('#modelDimensions'),resetButton=document.querySelector('#reset'),maxWidth=document.querySelector('#maxWidth'),minCenter=document.querySelector('#minCenter');
     const loader=new THREE.STLLoader();let renderer=null,scene=null,camera=null,controls=null,mesh=null,defaultCamera=null,controller=null;
