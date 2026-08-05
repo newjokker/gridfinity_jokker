@@ -26,6 +26,7 @@ CACHE_DIR = Path("/tmp/gridfinity-stl-cache")
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 RENDER_LOCK = threading.Lock()
 PIN_SCAD_PATH = ROOT / "011_BOSL2原版双头弹性插销.scad"
+LID_SCAD_PATH = ROOT / "third_party" / "gridfinity_extended_openscad" / "gridfinity_lid.scad"
 ACTION_LOG_PATH = ROOT / "log" / "action.log"
 ACTION_LOG_LOCK = threading.Lock()
 ACTION_TIMEZONE = ZoneInfo("Asia/Shanghai")
@@ -66,10 +67,12 @@ def record_request_action(response):
         "/baseplates": "访问底板生成器",
         "/bins": "访问盒子生成器",
         "/pins": "访问插销生成器",
+        "/lids": "访问防尘盖生成器",
         "/api/download": "生成并下载底板 ZIP",
         "/api/piece-stl": "生成底板 STL",
         "/api/bin-stl": "生成盒子 STL",
         "/api/pin-stl": "生成插销 STL",
+        "/api/lid-stl": "生成防尘盖 STL",
     }
     action = action_names.get(request.path)
     if action:
@@ -77,6 +80,7 @@ def record_request_action(response):
         detail_keys = (
             "width", "depth", "printer_x_cells", "printer_y_cells", "piece_id", "download",
             "gridx", "gridy", "gridz", "divx", "divy", "cut_mode", "target_center_length",
+            "lid_style", "magnets",
         )
         details = {key: values[key] for key in detail_keys if key in values}
         write_action_log(action, details, status=response.status_code)
@@ -336,9 +340,51 @@ def parse_pin_payload():
     return params
 
 
+def parse_lid_payload():
+    body = request_values()
+
+    def integer(name, default, minimum, maximum, label):
+        try:
+            raw = float(body.get(name, default))
+        except (TypeError, ValueError):
+            raise ValueError(f"{label}请输入整数")
+        if abs(raw - round(raw)) > 1e-8:
+            raise ValueError(f"{label}请输入整数")
+        value = int(round(raw))
+        if value < minimum or value > maximum:
+            raise ValueError(f"{label}需要在 {minimum} 到 {maximum} 之间")
+        return value
+
+    def boolean(name, default=False):
+        raw = body.get(name, default)
+        return raw if isinstance(raw, bool) else str(raw).lower() in ("1", "true", "yes", "on")
+
+    style = str(body.get("lid_style", "default"))
+    style_names = {
+        "default": "标准可堆叠",
+        "flat": "平整顶面",
+        "halfpitch": "半格可堆叠",
+        "efficient": "省料可堆叠",
+    }
+    if style not in style_names:
+        raise ValueError("盖板样式无效")
+
+    return {
+        "gridx": integer("gridx", 1, 1, 10, "X 网格数"),
+        "gridy": integer("gridy", 2, 1, 10, "Y 网格数"),
+        "lid_style": style,
+        "lid_style_name": style_names[style],
+        "magnets": boolean("magnets", False),
+    }
+
+
 def scad_define(value) -> str:
     if isinstance(value, bool):
         return "true" if value else "false"
+    if isinstance(value, str):
+        return json.dumps(value)
+    if isinstance(value, (list, tuple)):
+        return "[" + ",".join(scad_define(item) for item in value) + "]"
     return f"{float(value):.4f}"
 
 
@@ -385,6 +431,11 @@ def bins():
 @app.get("/pins")
 def pins():
     return render_template("pins.html")
+
+
+@app.get("/lids")
+def lids():
+    return render_template("lids.html")
 
 
 @app.post("/api/action")
@@ -550,6 +601,47 @@ def pin_stl():
     response.headers["Cache-Control"] = "private, max-age=3600"
     response.headers["X-Pin-Max-Width"] = f"{maximum_width:.3f}"
     response.headers["X-Pin-Center-Length"] = f"{params['target_center_length']:.3f}"
+    return response
+
+
+@app.route("/api/lid-stl", methods=["GET", "POST"])
+def lid_stl():
+    try:
+        params = parse_lid_payload()
+        body = request_values()
+        as_download = str(body.get("download", "0")).lower() in ("1", "true", "yes", "on")
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    if not Path(OPENSCAD).exists():
+        return jsonify({"error": "服务器尚未安装 OpenSCAD"}), 503
+    if not LID_SCAD_PATH.exists():
+        return jsonify({"error": "服务器缺少 Gridfinity Extended 盖子源文件"}), 503
+
+    defines = {
+        "width": [params["gridx"], 0],
+        "depth": [params["gridy"], 0],
+        "Lid_Options": params["lid_style"],
+        "Enable_Magnets": params["magnets"],
+        "Lid_Include_Magnets": params["magnets"],
+    }
+    source_hash = hashlib.sha256(LID_SCAD_PATH.read_bytes()).hexdigest()
+    cache_input = json.dumps({"source": source_hash, "defines": defines}, sort_keys=True)
+    cache_key = hashlib.sha256(cache_input.encode("utf-8")).hexdigest()
+    stl_path = CACHE_DIR / f"lid-{cache_key}.stl"
+    try:
+        with RENDER_LOCK:
+            if not stl_path.exists():
+                render_stl(LID_SCAD_PATH, stl_path, defines)
+    except (RuntimeError, subprocess.TimeoutExpired) as exc:
+        return jsonify({"error": str(exc)}), 500
+
+    kind = "magnetic" if params["magnets"] else "dust"
+    filename = f"gridfinity_{kind}_lid_{params['gridx']}x{params['gridy']}.stl"
+    response = send_file(stl_path, mimetype="model/stl", as_attachment=as_download, download_name=filename)
+    response.headers["Cache-Control"] = "private, max-age=3600"
+    response.headers["X-Lid-Grid"] = f"{params['gridx']}x{params['gridy']}"
+    response.headers["X-Lid-Style"] = params["lid_style"]
+    response.headers["X-Lid-Magnets"] = "true" if params["magnets"] else "false"
     return response
 
 
